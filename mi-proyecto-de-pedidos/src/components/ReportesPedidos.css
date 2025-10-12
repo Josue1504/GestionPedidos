@@ -1,0 +1,5 @@
+.reportes-pedidos { font-family: Arial, sans-serif; }
+.reportes-pedidos .form-row { margin-bottom: 8px; }
+.report-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+.report-table th, .report-table td { border: 1px solid #ddd; padding: 6px; }
+.report-table th { background: #f2f2f2; }

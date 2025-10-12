@@ -1,0 +1,406 @@
+/* Estilos generales del contenedor */
+.pedido-container {
+  width: 100%;
+  max-width: 900px; /* mantiene aspecto en escritorio */
+  margin: 20px auto;
+  border: 1px solid #ccc;
+  padding: 15px;
+  font-family: 'Arial', sans-serif;
+  font-size: 12px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+  box-sizing: border-box;
+}
+
+/* --- SECCIÓN SUPERIOR --- */
+.top-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start; /* Alinea arriba para el texto de la empresa */
+  margin-bottom: 20px;
+  border-bottom: 1px dashed #ccc; /* Línea divisoria suave */
+  padding-bottom: 15px;
+}
+
+.logo-and-company {
+  display: flex;
+  align-items: flex-start; /* Asegura que el logo y la info de la empresa estén alineados */
+  flex-grow: 1; /* Permite que ocupe el espacio disponible */
+}
+
+.logo {
+  border: 2px solid #333; /* Borde más oscuro para el logo */
+  border-radius: 50%;
+  padding: 8px 15px;
+  margin-right: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0; /* Evita que el logo se encoja */
+}
+
+.logo-text {
+  font-weight: bold;
+  font-size: 16px;
+  color: #333;
+  display: flex;
+  align-items: center;
+}
+
+.logo-img {
+  margin-right: 5px;
+  font-size: 18px; /* Tamaño del icono */
+  max-width: 150px; /* Por ejemplo, 100 píxeles de ancho máximo */
+  height: auto;    /* Mantiene la proporción de la imagen */
+}
+
+.company-info h2 {
+  font-size: 16px;
+  margin: 0 0 5px 0;
+  color: #000;
+}
+
+.company-info p {
+  margin: 0 0 2px 0;
+  line-height: 1.3;
+}
+
+.company-info .pbx {
+  font-weight: bold;
+  margin-top: 5px;
+  color: #e44d26; /* Color distintivo para el PBX */
+}
+
+.company-info .business-line {
+  font-style: italic;
+  font-size: 11px;
+  color: #555;
+  margin-bottom: 10px;
+}
+
+.company-info .location-date {
+  font-size: 11px;
+}
+
+.company-info .underline {
+  border-bottom: 1px solid #000;
+  display: inline-block;
+  min-width: 30px; /* Ajusta el tamaño de la línea si es necesario */
+}
+
+.pedido-box {
+  border: 1px solid #000;
+  padding: 5px 10px;
+  text-align: center;
+  width: 100%;
+  max-width: 140px; /* Ancho máximo pero flexible en pantallas pequeñas */
+  box-sizing: border-box;
+}
+
+.pedido-box p {
+  margin: 0;
+  font-weight: bold;
+  font-size: 14px;
+  background-color: #f0f0f0;
+  padding-bottom: 3px;
+  border-bottom: 1px solid #000;
+}
+
+.pedido-number-input {
+  height: 20px; /* Espacio para el número de pedido */
+  border: 1px solid #ccc;
+  margin-top: 5px;
+  box-sizing: border-box;
+}
+
+
+/* --- SECCIÓN DE DATOS DEL CLIENTE Y ENVÍO --- */
+.client-shipping-section {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  border-bottom: 1px dashed #ccc;
+  padding-bottom: 15px;
+}
+
+.client-group, .shipping-group {
+  flex-basis: 48%; /* Ocupa casi la mitad del espacio */
+  min-width: 0; /* evita overflow en flexbox */
+}
+
+.input-line {
+  display: flex;
+  align-items: baseline; /* Alinea el texto con el input */
+  margin-bottom: 8px;
+}
+
+.input-line label {
+  white-space: nowrap; /* Evita que el label se parta */
+  margin-right: 5px;
+  font-weight: bold;
+  min-width: 60px; /* Ancho mínimo para alinear labels */
+}
+
+.input-line input[type="text"] {
+  flex-grow: 1; /* El input toma el resto del espacio */
+  border: none;
+  border-bottom: 1px solid #000; /* Línea de input más marcada */
+  padding: 2px 0;
+  font-size: 12px;
+}
+
+.input-line .small-input {
+  flex-grow: 0; /* Para inputs más pequeños en la misma línea */
+  width: 80px;
+  margin-right: 10px;
+}
+
+.input-line .medium-input {
+  flex-grow: 0;
+  width: 120px;
+  margin-right: 10px;
+}
+
+.input-line .inline-label {
+  font-weight: normal; /* Labels secundarios con peso normal */
+  min-width: auto;
+  margin-left: 10px;
+}
+
+
+/* --- SECCIÓN DE LA TABLA DE PRODUCTOS --- */
+.table-section {
+  margin-bottom: 20px;
+  overflow-x: auto; /* permite scroll horizontal en dispositivos pequeños */
+  -webkit-overflow-scrolling: touch;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+table th, table td {
+  border: 1px solid #000; /* Bordes negros para la tabla */
+  padding: 5px;
+  text-align: left;
+  vertical-align: top; /* Alinea el contenido arriba */
+  height: 25px; /* Altura mínima para cada celda */
+}
+
+table th {
+  background-color: #e0e0e0; /* Fondo gris claro para los encabezados */
+  font-weight: bold;
+  text-align: center;
+}
+
+table td input[type="text"] {
+  width: calc(100% - 4px); /* Ancho del input menos padding */
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+/* Asegura que las celdas de la tabla tengan el alto adecuado, incluso si los inputs están vacíos */
+table tbody tr {
+  min-height: 25px;
+}
+
+
+/* --- SECCIÓN DE PIE DE PÁGINA --- */
+.footer-section {
+  display: flex;
+  flex-wrap: wrap; /* Permite que los elementos se envuelvan */
+  justify-content: space-between;
+  align-items: flex-end; /* Alinea los elementos al final */
+  margin-top: 20px;
+}
+
+.total-en-letras {
+  flex-basis: 60%;
+  margin-right: 2%;
+  display: flex;
+  flex-direction: column;
+}
+
+.total-en-letras label {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.total-en-letras .underline-text {
+  border: 1px solid #000; /* Borde completo para el total en letras */
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  padding: 0 5px;
+  box-sizing: border-box;
+  background-color: #f9f9f9;
+}
+
+.total-q {
+  flex-basis: 35%; /* Ajustado para dejar espacio */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.total-q label {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.total-q .total-amount {
+  border: 1px solid #000; /* Borde para el total Q */
+  padding: 5px 10px;
+  font-size: 16px;
+  font-weight: bold;
+  background-color: #f0f0f0;
+  width: 100%;
+  text-align: right;
+  box-sizing: border-box;
+}
+
+.signature-lines {
+  width: 100%; /* Ocupa todo el ancho */
+  margin-top: 20px;
+  padding-top: 10px;
+  border-top: 1px dashed #ccc;
+}
+
+.signature-lines .input-line {
+  justify-content: flex-end; /* Alinea a la derecha para Factura y Autorizado */
+}
+
+.signature-lines .input-line label {
+  min-width: 80px; /* Ajusta el ancho para estas etiquetas */
+}
+
+.signature-lines .input-line input {
+  width: 180px; /* Ancho fijo para estos inputs */
+}
+
+.signature-lines .input-line .medium-input {
+  width: 180px;
+  margin-right: 20px; /* Espacio entre los dos inputs */
+}
+
+
+
+/* Pequeño ajuste para evitar saltos de línea inesperados en los labels de la tabla */
+.client-shipping-section .input-line label {
+  min-width: 70px;
+}
+
+@media print {
+  .action-buttons,
+  .table-actions {
+    display: none;
+  }
+}
+
+/* Print: show only printable-pedido */
+@media print {
+  body * { visibility: hidden !important; }
+  .printable-pedido, .printable-pedido * { visibility: visible !important; }
+  .printable-pedido { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; background: #fff; }
+  input, textarea { border: none !important; background: transparent !important; box-shadow: none !important; }
+  table, th, td { border: 1px solid #000 !important; }
+}
+
+/* Si necesitas ajustar el contenedor de la imagen */
+.logo {
+    width: 120px;
+    height: 120px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid #fff; /* Borde blanco */
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+/* Media queries para pantallas pequeñas */
+@media (max-width: 720px) {
+  .top-section, .logo-and-company {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .pedido-box {
+    margin-top: 12px;
+    align-self: flex-end;
+  }
+  .client-shipping-section {
+    flex-direction: column;
+  }
+  .client-group, .shipping-group {
+    flex-basis: 100%;
+    margin-bottom: 12px;
+  }
+  .signature-lines .input-line input,
+  .signature-lines .input-line .medium-input {
+    width: 100%;
+    max-width: none;
+  }
+  .pedido-container { padding: 10px; }
+  table th, table td { font-size: 12px; }
+}
+
+/* Resaltado de campos con error */
+.input-error {
+  border: 2px solid #dc3545 !important; /* rojo */
+  box-shadow: 0 0 0 3px rgba(220,53,69,0.08);
+}
+
+.row-error td {
+  background: #ffecec;
+}
+
+/* Estilo para descripción de solo lectura (autocompletada) */
+table td input[readonly] {
+  background-color: #f5f7fa;
+  color: #333;
+}
+
+.code-status {
+  position: absolute;
+  bottom: -18px;
+  left: 2px;
+}
+
+/* Styles for print-like product table in PedidoPrintView */
+.print-table-section {
+  margin-top: 8px;
+}
+.print-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.print-table thead th {
+  background: #e0e0e0;
+  border: 1px solid #000;
+  padding: 8px;
+  text-align: center;
+  font-weight: 700;
+}
+.print-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  vertical-align: top;
+}
+.td-right {
+  text-align: right;
+}
+.td-center {
+  text-align: center;
+}
+
+.total-box {
+  border: 1px solid #000;
+  padding: 8px;
+  min-height: 36px;
+}
