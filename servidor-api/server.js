@@ -322,39 +322,6 @@ app.get('/api/health', (req, res) => {
     }
 });
 
-// Catch all para rutas no encontradas
-app.use((req, res) => {
-    console.log('Ruta no encontrada:', req.originalUrl);
-    res.status(404).json({ 
-        error: 'Ruta no encontrada', 
-        path: req.originalUrl,
-        message: 'API endpoint not found'
-    });
-});
-
-// Error handling middleware (debe ir al final)
-app.use((err, req, res, next) => {
-    console.error('Error:', err);
-    // Para errores CORS, responder con cabeceras mínimas
-    if (err.message && err.message.startsWith('Not allowed by CORS')) {
-        return res.status(403).json({ error: err.message });
-    }
-    res.status(500).json({ error: 'Internal server error' });
-});
-
-const PORT = process.env.PORT || 5000;
-
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Servidor iniciado exitosamente`);
-    console.log(`📍 Puerto: ${PORT}`);
-    console.log(`🌍 Modo: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`🔗 CORS permitido para: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
-    console.log(`🗃️  Base de datos: ${db ? 'PostgreSQL conectada' : 'Modo prueba'}`);
-    console.log(`⏰ Iniciado en: ${new Date().toISOString()}`);
-}).on('error', (err) => {
-    console.error('❌ Error al iniciar servidor:', err);
-});
-
 // --- CHEQUEO DE PERMISOS ---
 app.get('/api/has-permission', isAuthenticated, async (req, res) => {
     try {
@@ -540,4 +507,37 @@ app.delete('/api/pedidos/:id', isAuthenticated, requirePermission('pedidos.delet
         console.error('Error en DELETE /api/pedidos/:id', e);
         res.status(500).json({ message: 'Error interno' });
     }
+});
+
+// Catch all para rutas no encontradas (debe ir AL FINAL después de todas las rutas)
+app.use((req, res) => {
+    console.log('Ruta no encontrada:', req.originalUrl);
+    res.status(404).json({ 
+        error: 'Ruta no encontrada', 
+        path: req.originalUrl,
+        message: 'API endpoint not found'
+    });
+});
+
+// Error handling middleware (debe ir al final)
+app.use((err, req, res, next) => {
+    console.error('Error:', err);
+    // Para errores CORS, responder con cabeceras mínimas
+    if (err.message && err.message.startsWith('Not allowed by CORS')) {
+        return res.status(403).json({ error: err.message });
+    }
+    res.status(500).json({ error: 'Internal server error' });
+});
+
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Servidor iniciado exitosamente`);
+    console.log(`📍 Puerto: ${PORT}`);
+    console.log(`🌍 Modo: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🔗 CORS permitido para: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
+    console.log(`🗃️  Base de datos: ${db ? 'PostgreSQL conectada' : 'Modo prueba'}`);
+    console.log(`⏰ Iniciado en: ${new Date().toISOString()}`);
+}).on('error', (err) => {
+    console.error('❌ Error al iniciar servidor:', err);
 });
