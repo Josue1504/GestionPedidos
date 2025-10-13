@@ -45,15 +45,16 @@ app.use(express.json());
 
 // --- Middleware de sesión (debe ir ANTES de las rutas que la usan) ---
 const isProduction = process.env.NODE_ENV === 'production';
+// Render y proxies requieren trust proxy antes del middleware de sesión
 app.set('trust proxy', 1);
 app.use(session({
     secret: process.env.SESSION_SECRET || 'tu_secreto_de_sesion',
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: isProduction,
+        secure: true, // Siempre true en producción (Render es HTTPS)
         httpOnly: true,
-        sameSite: isProduction ? 'none' : 'lax',
+        sameSite: 'none', // Necesario para cross-origin cookies
         maxAge: 24 * 60 * 60 * 1000
     }
 }));
