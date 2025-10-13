@@ -21,9 +21,26 @@ const PedidoPrintView = ({ pedido }) => {
     // Extraer productos iniciales desde el pedido
     let initialProductos = [];
     try {
-      if (pedido.productos_json) initialProductos = typeof pedido.productos_json === 'string' ? JSON.parse(pedido.productos_json) : pedido.productos_json;
-      else if (pedido.productos) initialProductos = pedido.productos;
+      if (pedido.productos_json) {
+        if (typeof pedido.productos_json === 'string') {
+          try {
+            initialProductos = JSON.parse(pedido.productos_json);
+          } catch (err) {
+            console.error('Error parseando productos_json:', err, pedido.productos_json);
+            initialProductos = [];
+          }
+        } else if (Array.isArray(pedido.productos_json)) {
+          initialProductos = pedido.productos_json;
+        } else {
+          initialProductos = [];
+        }
+      } else if (pedido.productos && Array.isArray(pedido.productos)) {
+        initialProductos = pedido.productos;
+      } else {
+        initialProductos = [];
+      }
     } catch (e) {
+      console.error('Error inesperado en productos_json:', e);
       initialProductos = [];
     }
 
@@ -89,7 +106,7 @@ const PedidoPrintView = ({ pedido }) => {
           <div className="pedido-box" style={{ display: 'inline-block' }}>
             <p style={{ margin: 0 }}>PEDIDO NO.</p>
             <div className="pedido-number-input" style={{ padding: '4px 6px' }}>
-              <p style={{ margin: 0 }}>{pedido.pedidoNo}</p>
+              <p style={{ margin: 0 }}>{pedido.pedidoNo || ''}</p>
             </div>
           </div>
         </div>
@@ -97,14 +114,14 @@ const PedidoPrintView = ({ pedido }) => {
 
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10 }}>
         <div style={{ width: '60%' }}>
-          <p><strong>Nombre:</strong> {pedido.nombre_cliente}</p>
-          <p><strong>Dirección:</strong> {pedido.direccion_cliente}</p>
-          <p><strong>Envío No:</strong> {pedido.envio_no} <strong>Transporte:</strong> {pedido.transporte}</p>
+          <p><strong>Nombre:</strong> {pedido.nombre_cliente || ''}</p>
+          <p><strong>Dirección:</strong> {pedido.direccion_cliente || ''}</p>
+          <p><strong>Envío No:</strong> {pedido.envio_no || ''} <strong>Transporte:</strong> {pedido.transporte || ''}</p>
         </div>
         <div style={{ width: '35%' }}>
-          <p><strong>NIT:</strong> {pedido.nit_cliente}</p>
-          <p><strong>Tel:</strong> {pedido.tel_cliente}</p>
-          <p><strong>Vendedor:</strong> {pedido.vendedor}</p>
+          <p><strong>NIT:</strong> {pedido.nit_cliente || ''}</p>
+          <p><strong>Tel:</strong> {pedido.tel_cliente || ''}</p>
+          <p><strong>Vendedor:</strong> {pedido.vendedor || ''}</p>
         </div>
       </div>
 
@@ -140,11 +157,11 @@ const PedidoPrintView = ({ pedido }) => {
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 12 }}>
         <div style={{ width: '65%' }}>
           <p><strong>TOTAL EN LETRAS:</strong></p>
-          <div style={{ border: '1px solid #000', padding: 8, minHeight: 24 }}>{pedido.total_letras || pedido.total_letras || ''}</div>
+          <div style={{ border: '1px solid #000', padding: 8, minHeight: 24 }}>{pedido.total_letras || ''}</div>
         </div>
         <div style={{ width: '30%' }}>
           <p><strong>TOTAL Q.</strong></p>
-          <div style={{ border: '1px solid #000', padding: 8, textAlign: 'right' }}>Q. {pedido.total_q}</div>
+          <div style={{ border: '1px solid #000', padding: 8, textAlign: 'right' }}>Q. {pedido.total_q || ''}</div>
         </div>
       </div>
     </div>
