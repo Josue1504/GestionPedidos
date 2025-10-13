@@ -32,8 +32,13 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-// Responder preflight de todas las rutas
-app.options('*', cors(corsOptions));
+// Responder preflight (Express 5 no acepta "*" en rutas)
+app.use((req, res, next) => {
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(204);
+    }
+    next();
+});
 
 // --- Habilitar el uso de JSON para las peticiones ---
 app.use(express.json());
