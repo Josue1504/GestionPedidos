@@ -28,7 +28,14 @@ app.use(cors(corsOptions));
 // Manejo genérico de preflight OPTIONS (compatible con Express 5)
 app.use((req, res, next) => {
     if (req.method === 'OPTIONS') {
-        // cors() ya agregó los headers CORS; solo responder OK
+        const origin = req.headers.origin;
+        if (origin) {
+            res.header('Access-Control-Allow-Origin', origin);
+            res.header('Vary', 'Origin');
+        }
+        res.header('Access-Control-Allow-Credentials', 'true');
+        res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+        res.header('Access-Control-Allow-Headers', req.headers['access-control-request-headers'] || 'Content-Type, Authorization, X-Requested-With');
         return res.sendStatus(204);
     }
     next();
