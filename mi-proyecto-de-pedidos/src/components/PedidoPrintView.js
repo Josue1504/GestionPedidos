@@ -22,18 +22,29 @@ const PedidoPrintView = ({ pedido }) => {
     let initialProductos = [];
     try {
       if (pedido.productos_json) {
+        let parsed;
         if (typeof pedido.productos_json === 'string') {
           try {
-            initialProductos = JSON.parse(pedido.productos_json);
+            parsed = JSON.parse(pedido.productos_json);
           } catch (err) {
             console.error('Error parseando productos_json:', err, pedido.productos_json);
-            initialProductos = [];
+            parsed = [];
           }
-        } else if (Array.isArray(pedido.productos_json)) {
-          initialProductos = pedido.productos_json;
+        } else {
+          parsed = pedido.productos_json;
+        }
+        // Si es un objeto con productos, extraer el array
+        if (Array.isArray(parsed)) {
+          initialProductos = parsed;
+        } else if (parsed && Array.isArray(parsed.productos)) {
+          initialProductos = parsed.productos;
+        } else if (parsed && typeof parsed === 'object' && Object.keys(parsed).length && Array.isArray(parsed[Object.keys(parsed).find(k => k.toLowerCase().includes('producto'))])) {
+          // Fallback: buscar cualquier clave que contenga 'producto' y sea array
+          initialProductos = parsed[Object.keys(parsed).find(k => k.toLowerCase().includes('producto'))];
         } else {
           initialProductos = [];
         }
+        console.log('Productos extraídos:', initialProductos);
       } else if (pedido.productos && Array.isArray(pedido.productos)) {
         initialProductos = pedido.productos;
       } else {
