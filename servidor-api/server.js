@@ -238,7 +238,13 @@ app.post('/api/login', async (req, res) => {
 
         const user = result.rows[0];
         console.log('🔍 User found:', { id: user.id, username: user.username, active: user.active });
-        
+
+        // Verificar si el usuario está activo
+        if (!user.active || user.active === 0) {
+            console.log('❌ Usuario inactivo, acceso denegado');
+            return res.status(403).json({ message: 'Usuario inactivo. Contacta al administrador.' });
+        }
+
         const isPasswordValid = await bcrypt.compare(pwd, user.password_hash);
         console.log('🔍 Password validation:', isPasswordValid);
 
@@ -250,7 +256,7 @@ app.post('/api/login', async (req, res) => {
         // Guardar en sesión
         req.session.userId = user.id;
         req.session.username = user.username;
-        
+
         console.log('✅ Login successful:', { 
             user: user.username, 
             id: user.id, 
