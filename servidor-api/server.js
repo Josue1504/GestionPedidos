@@ -122,26 +122,39 @@ const isAuthenticated = (req, res, next) => {
 };
 
 // --- Autorización por permisos ---
+// Regla: si el usuario tiene permisos directos (user_permissions), estos actúan como override
+// y se IGNORAN los permisos por rol. Si no tiene directos, se usan los del rol.
 const hasPermission = async (userId, permissionName) => {
     try {
-        // Si es admin por rol, permitir todo
+        // 1) Si es admin por rol, permitir todo
         const adminRole = await dbQuery(
             'SELECT 1 FROM user_roles ur JOIN roles r ON ur.role_id = r.id WHERE ur.user_id = $1 AND r.name = $2 LIMIT 1',
             [userId, 'admin']
         );
         if (adminRole.rows.length > 0) return true;
 
-        // Verificar permisos directos y por roles
-        const result = await dbQuery(
-            `SELECT DISTINCT p.name
-             FROM permissions p
-             LEFT JOIN user_permissions up ON p.id = up.permission_id AND up.user_id = $1
-             LEFT JOIN role_permissions rp ON p.id = rp.permission_id
-             LEFT JOIN user_roles ur ON rp.role_id = ur.role_id AND ur.user_id = $1
-             WHERE (up.user_id IS NOT NULL OR ur.user_id IS NOT NULL) AND p.name = $2`,
+        // 2) ¿Tiene permisos directos? -> override
+        const directCountRes = await dbQuery('SELECT COUNT(*)::int AS c FROM user_permissions WHERE user_id = $1', [userId]);
+        const hasDirect = (directCountRes.rows[0]?.c || 0) > 0;
+        if (hasDirect) {
+            const directCheck = await dbQuery(
+                `SELECT 1 FROM user_permissions up
+                 JOIN permissions p ON up.permission_id = p.id
+                 WHERE up.user_id = $1 AND p.name = $2 LIMIT 1`,
+                [userId, permissionName]
+            );
+            return directCheck.rows.length > 0;
+        }
+
+        // 3) Sin permisos directos -> usar permisos por rol
+        const roleCheck = await dbQuery(
+            `SELECT 1 FROM user_roles ur
+             JOIN role_permissions rp ON ur.role_id = rp.role_id
+             JOIN permissions p ON p.id = rp.permission_id
+             WHERE ur.user_id = $1 AND p.name = $2 LIMIT 1`,
             [userId, permissionName]
         );
-        return result.rows.length > 0;
+        return roleCheck.rows.length > 0;
     } catch (e) {
         console.error('Error verificando permisos:', e);
         return false;
