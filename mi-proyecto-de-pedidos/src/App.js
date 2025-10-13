@@ -5,6 +5,7 @@ import PedidosList from './components/PedidosList';
 import LoginForm from './components/LoginForm';
 import AdminUsers from './components/AdminUsers';
 import ReportesPedidos from './components/ReportesPedidos';
+import apiRequest from './apiRequest';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -18,7 +19,7 @@ function App() {
 
   // Al montar la app intentamos recuperar la sesión actual (si existe)
   useEffect(() => {
-    fetch('/api/me', { credentials: 'include' })
+    apiRequest('/api/me')
       .then(r => {
         if (!r.ok) throw new Error('no-session');
         return r.json();
@@ -39,7 +40,7 @@ function App() {
   const handleLoginSuccess = () => {
     setIsAuthenticated(true);
     // después del login solicitamos /api/me para obtener rol y username
-    fetch('/api/me', { credentials: 'include' })
+    apiRequest('/api/me')
       .then(r => r.json())
       .then(data => {
         setUser({ id: data.id, username: data.username });
@@ -53,9 +54,8 @@ function App() {
   // Nuevo: función para manejar el cierre de sesión
   const handleLogout = async () => {
     try {
-      const response = await fetch('/api/logout', {
-        method: 'POST',
-        credentials: 'include',
+      const response = await apiRequest('/api/logout', {
+        method: 'POST'
       });
       if (response.ok) {
         setIsAuthenticated(false); // Restablecer el estado de autenticación

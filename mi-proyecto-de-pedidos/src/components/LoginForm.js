@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './LoginForm.css';
+import apiRequest from '../apiRequest';
 
 const LoginForm = ({ onLoginSuccess }) => {
     const [username, setUsername] = useState('');
@@ -11,17 +12,14 @@ const LoginForm = ({ onLoginSuccess }) => {
         e.preventDefault();
         setError('');
 
-        const url = isRegistering 
-            ? 'http://localhost:5000/api/register' 
-            : 'http://localhost:5000/api/login';
+        const endpoint = isRegistering ? '/api/register' : '/api/login';
 
         try {
-            const response = await fetch(url.replace('http://localhost:5000', ''), {
+            const response = await apiRequest(endpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                credentials: 'include',
                 body: JSON.stringify({ username, password }),
             });
 
