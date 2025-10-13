@@ -141,9 +141,10 @@ const PedidoForm = ({ onViewForm }) => {
     };
     const [finalData, setFinalData] = useState(initialFinalData);
     const [errors, setErrors] = useState({});
-    // Start conservatively: assume no permissions until the server confirms them.
+    // Permisos separados: crear y ver
     const [canCreatePedido, setCanCreatePedido] = useState(false);
     const [canViewPedidos, setCanViewPedidos] = useState(false);
+    const [canPrintPedido, setCanPrintPedido] = useState(false);
     
     // Función para inicializar el formulario con datos de fecha y pedido nuevos
     const initializeForm = () => {
@@ -173,13 +174,19 @@ const PedidoForm = ({ onViewForm }) => {
     // Llama a la función de inicialización cuando el componente se monta por primera vez
     useEffect(() => {
         initializeForm();
-        // Check permissions to enable/disable actions
+        // Permiso para crear y para imprimir (imprimir solo depende de crear)
         apiRequest('/api/has-permission?name=pedidos.create')
             .then(r => r.json())
-            .then(d => setCanCreatePedido(!!d.ok))
-            .catch(() => setCanCreatePedido(false));
+            .then(d => {
+                setCanCreatePedido(!!d.ok);
+                setCanPrintPedido(!!d.ok);
+            })
+            .catch(() => {
+                setCanCreatePedido(false);
+                setCanPrintPedido(false);
+            });
 
-        // A user can view/print pedidos if they have view_own or view_all
+        // Permiso para ver pedidos (no afecta imprimir)
         Promise.all([
             apiRequest('/api/has-permission?name=pedidos.view_own').then(r => r.json()).catch(() => ({ ok: false })),
             apiRequest('/api/has-permission?name=pedidos.view_all').then(r => r.json()).catch(() => ({ ok: false }))
@@ -536,21 +543,16 @@ const PedidoForm = ({ onViewForm }) => {
                         <button type="button" disabled title="No tienes permiso para crear pedidos">Nuevo Pedido</button>
                     )}
 
-                    {(canViewPedidos && canCreatePedido) ? (
+                    {canPrintPedido ? (
                         <button type="button" onClick={handlePrint}>Imprimir / Guardar PDF</button>
                     ) : (
-                        <button type="button" disabled title="No tienes permiso para ver/Imprimir pedidos">Imprimir / Guardar PDF</button>
+                        <button type="button" disabled title="No tienes permiso para imprimir pedidos">Imprimir / Guardar PDF</button>
                     )}
                 </div>
 
                 {!canCreatePedido && (
                     <div style={{ marginTop: 8, color: '#856404', background: '#fff3cd', padding: 8, borderRadius: 4 }}>
                         No tienes permisos para crear o iniciar pedidos. Contacta a un administrador si crees que esto es un error.
-                    </div>
-                )}
-                {!canViewPedidos && (
-                    <div style={{ marginTop: 8, color: '#856404', background: '#fff3cd', padding: 8, borderRadius: 4 }}>
-                        No tienes permisos para ver o imprimir pedidos.
                     </div>
                 )}
             </form>
