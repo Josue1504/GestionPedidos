@@ -17,11 +17,30 @@ app.use((err, req, res, next) => {
 
 // --- Configuración de CORS con credenciales ---
 const corsOptions = {
-    origin: (process.env.FRONTEND_URL || 'http://localhost:3000').replace(/\/$/, ''),
+    origin: (origin, callback) => {
+        const allowedOrigins = [
+            'http://localhost:3000',
+            'https://gestionpedidos-1-fe.onrender.com',
+            process.env.FRONTEND_URL?.replace(/\/$/, '')
+        ].filter(Boolean);
+        
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true,
     optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
+
+// Debug CORS
+app.use((req, res, next) => {
+    console.log(`Origin: ${req.headers.origin}`);
+    console.log(`FRONTEND_URL: ${process.env.FRONTEND_URL}`);
+    next();
+});
 
 // --- Habilitar el uso de JSON para las peticiones ---
 app.use(express.json());
