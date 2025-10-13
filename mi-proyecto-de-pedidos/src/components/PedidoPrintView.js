@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './PedidoForm.css';
+import apiRequest from '../apiRequest';
 
 const PedidoPrintView = ({ pedido }) => {
   // siempre declarar hooks en el tope del componente para cumplir las reglas de hooks
@@ -39,7 +40,7 @@ const PedidoPrintView = ({ pedido }) => {
       try {
         const code = encodeURIComponent((p.codigo || '').toString().trim());
         if (!code) return { i, descripcion: p.descripcion };
-        const res = await fetch(`/api/productos/${code}`);
+        const res = await apiRequest(`/api/productos/${code}`);
         if (res.ok) {
           const data = await res.json();
           return { i, descripcion: data.descripcion || p.descripcion };
