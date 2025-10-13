@@ -81,8 +81,8 @@ app.get('/api/health', (req, res) => {
     }
 });
 
-// Catch all para rutas no encontradas
-app.use('*', (req, res) => {
+// Catch all para rutas no encontradas (Express 5: evitar usar '*')
+app.use((req, res) => {
     console.log('Ruta no encontrada:', req.originalUrl);
     res.status(404).json({ 
         error: 'Ruta no encontrada', 
