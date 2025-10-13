@@ -580,6 +580,15 @@ app.get('/api/me', isAuthenticated, (req, res) => {
     });
 });
 
+// Ruta raíz para verificar que el servidor funciona
+app.get('/', (req, res) => {
+    res.json({ 
+        message: 'API de Gestión de Pedidos está funcionando', 
+        version: '1.0.0',
+        status: 'ok' 
+    });
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`Servidor escuchando en el puerto ${PORT}`);
