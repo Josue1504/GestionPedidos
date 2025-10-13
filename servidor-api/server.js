@@ -350,12 +350,120 @@ app.get('/api/productos/:code', isAuthenticated, async (req, res) => {
 });
 
 // --- USUARIOS (para reportes) ---
+// --- USUARIOS (gestión completa) ---
 app.get('/api/users', isAuthenticated, requirePermission('users.manage'), async (req, res) => {
     try {
-        const result = await dbQuery('SELECT id, username FROM users ORDER BY username ASC', []);
-        res.json(result.rows);
+        const result = await dbQuery(
+            `SELECT 
+                u.id, 
+                u.username, 
+                COALESCE(u.active, 1) AS active,
+                COALESCE(array_agg(r.name) FILTER (WHERE r.name IS NOT NULL), '{}') AS roles
+             FROM users u
+             LEFT JOIN user_roles ur ON u.id = ur.user_id
+             LEFT JOIN roles r ON ur.role_id = r.id
+             GROUP BY u.id
+             ORDER BY u.username ASC`);
+        // Map roles from Postgres array to JS array if needed
+        const users = result.rows.map(r => ({ 
+            id: r.id, 
+            username: r.username, 
+            active: r.active === 1 || r.active === true, 
+            roles: Array.isArray(r.roles) ? r.roles : [] 
+        }));
+        res.json(users);
     } catch (e) {
-        console.error('Error en /api/users:', e);
+        console.error('Error en GET /api/users:', e);
+        res.status(500).json({ message: 'Error interno' });
+    }
+});
+
+app.get('/api/users/:id', isAuthenticated, requirePermission('users.manage'), async (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+        const userRes = await dbQuery('SELECT id, username, COALESCE(active,1) AS active FROM users WHERE id = $1', [id]);
+        if (userRes.rows.length === 0) return res.status(404).json({ message: 'Usuario no encontrado' });
+        const base = userRes.rows[0];
+        const rolesRes = await dbQuery('SELECT r.id, r.name FROM user_roles ur JOIN roles r ON ur.role_id = r.id WHERE ur.user_id = $1', [id]);
+        const permsRes = await dbQuery('SELECT permission_id FROM user_permissions WHERE user_id = $1', [id]);
+        res.json({ 
+            id: base.id, 
+            username: base.username, 
+            active: base.active === 1 || base.active === true, 
+            roles: rolesRes.rows.map(r => r.name),
+            permissionIds: permsRes.rows.map(p => p.permission_id)
+        });
+    } catch (e) {
+        console.error('Error en GET /api/users/:id:', e);
+        res.status(500).json({ message: 'Error interno' });
+    }
+});
+
+app.post('/api/users', isAuthenticated, requirePermission('users.manage'), async (req, res) => {
+    try {
+        const { username, password, roleId, permissionIds } = req.body || {};
+        if (!username || !password) return res.status(400).json({ message: 'username y password requeridos' });
+        // crear usuario
+        const hash = await bcrypt.hash(password, 10);
+        const insertUser = await dbQuery('INSERT INTO users (username, password_hash, active) VALUES ($1, $2, 1) RETURNING id', [username, hash]);
+        const userId = insertUser.rows[0].id;
+        // rol opcional
+        if (roleId) {
+            await dbQuery('INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [userId, Number(roleId)]);
+        }
+        // permisos opcionales
+        if (Array.isArray(permissionIds) && permissionIds.length) {
+            for (const pid of permissionIds) {
+                await dbQuery('INSERT INTO user_permissions (user_id, permission_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [userId, Number(pid)]);
+            }
+        }
+        res.json({ ok: true, userId });
+    } catch (e) {
+        console.error('Error en POST /api/users:', e);
+        // Manejar conflicto por username único
+        if (e && e.code === '23505') return res.status(409).json({ message: 'El username ya existe' });
+        res.status(500).json({ message: 'Error interno' });
+    }
+});
+
+app.put('/api/users/:id', isAuthenticated, requirePermission('users.manage'), async (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+        const { username, password, roleId, permissionIds, active } = req.body || {};
+        if (!username) return res.status(400).json({ message: 'username requerido' });
+        // actualizar username/active
+        await dbQuery('UPDATE users SET username = $1, active = $2 WHERE id = $3', [username, active ? 1 : 0, id]);
+        // actualizar password si viene
+        if (password) {
+            const hash = await bcrypt.hash(password, 10);
+            await dbQuery('UPDATE users SET password_hash = $1 WHERE id = $2', [hash, id]);
+        }
+        // actualizar rol único: limpiar y asignar si viene
+        await dbQuery('DELETE FROM user_roles WHERE user_id = $1', [id]);
+        if (roleId) {
+            await dbQuery('INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [id, Number(roleId)]);
+        }
+        // actualizar permisos directos: reemplazar por los enviados
+        await dbQuery('DELETE FROM user_permissions WHERE user_id = $1', [id]);
+        if (Array.isArray(permissionIds) && permissionIds.length) {
+            for (const pid of permissionIds) {
+                await dbQuery('INSERT INTO user_permissions (user_id, permission_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [id, Number(pid)]);
+            }
+        }
+        res.json({ ok: true });
+    } catch (e) {
+        console.error('Error en PUT /api/users/:id:', e);
+        res.status(500).json({ message: 'Error interno' });
+    }
+});
+
+app.delete('/api/users/:id', isAuthenticated, requirePermission('users.manage'), async (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+        await dbQuery('DELETE FROM users WHERE id = $1', [id]);
+        res.json({ ok: true });
+    } catch (e) {
+        console.error('Error en DELETE /api/users/:id:', e);
         res.status(500).json({ message: 'Error interno' });
     }
 });

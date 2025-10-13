@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './AdminUsers.css';
+import apiRequest from '../apiRequest';
 
 const AdminUsers = ({ onClose }) => {
   const [users, setUsers] = useState([]);
@@ -17,7 +18,7 @@ const AdminUsers = ({ onClose }) => {
   const [editingActive, setEditingActive] = useState(true);
 
   useEffect(() => {
-    fetch('/api/permissions', { credentials: 'include' })
+    apiRequest('/api/permissions')
       .then(async r => {
         if (!r.ok) throw new Error('No se pudieron cargar permisos');
         const j = await r.json();
@@ -28,7 +29,7 @@ const AdminUsers = ({ onClose }) => {
     const loadUsers = () => {
       setLoadingUsers(true);
       setUsersError(null);
-      fetch('/api/users', { credentials: 'include' })
+      apiRequest('/api/users')
         .then(async r => {
           if (!r.ok) {
             const text = await r.text().catch(() => '');
@@ -49,7 +50,7 @@ const AdminUsers = ({ onClose }) => {
 
     loadUsers();
     // obtener roles
-    fetch('/api/roles', { credentials: 'include' })
+    apiRequest('/api/roles')
       .then(async r => {
         if (!r.ok) throw new Error('No se pudieron cargar roles');
         const j = await r.json();
@@ -57,11 +58,11 @@ const AdminUsers = ({ onClose }) => {
       })
       .catch(() => setRolesList([]));
     // comprobar si el usuario actual puede administrar usuarios (para mostrar/ocultar la opción)
-    fetch('/api/has-permission?name=users.manage', { credentials: 'include' })
+    apiRequest('/api/has-permission?name=users.manage')
       .then(r => r.json())
       .then(data => setCanGrantUsersManage(!!data.ok))
       .catch(() => setCanGrantUsersManage(false));
-    fetch('/api/has-permission?name=pedidos.view_all', { credentials: 'include' })
+    apiRequest('/api/has-permission?name=pedidos.view_all')
       .then(r => r.json())
       .then(data => setCanGrantViewAll(!!data.ok))
       .catch(() => setCanGrantViewAll(false));
@@ -70,7 +71,7 @@ const AdminUsers = ({ onClose }) => {
   const refreshUsers = () => {
     setUsersError(null);
     setLoadingUsers(true);
-    fetch('/api/users', { credentials: 'include' })
+    apiRequest('/api/users')
       .then(async r => {
         if (!r.ok) {
           const text = await r.text().catch(() => '');
@@ -91,7 +92,7 @@ const AdminUsers = ({ onClose }) => {
 
   const loadUserForEdit = async (id) => {
     try {
-      const res = await fetch(`/api/users/${id}`, { credentials: 'include' });
+  const res = await apiRequest(`/api/users/${id}`);
       if (!res.ok) return alert('No se pudo cargar el usuario');
       const data = await res.json();
       setEditingId(data.id);
@@ -112,7 +113,7 @@ const AdminUsers = ({ onClose }) => {
     const body = { username, password: password || undefined, roleId: roleId || null, permissionIds: Array.from(checked), active: editingActive };
     try {
       console.log('Enviando datos al servidor (PUT /api/users):', { id: editingId, username, roleId, permissionIds: Array.from(checked), active: editingActive });
-      const res = await fetch(`/api/users/${editingId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(body) });
+  const res = await apiRequest(`/api/users/${editingId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const textResp = await res.text().catch(() => null);
       let parsedResp = null;
       try { parsedResp = textResp ? JSON.parse(textResp) : null; } catch(e) { parsedResp = textResp; }
@@ -138,7 +139,7 @@ const AdminUsers = ({ onClose }) => {
   const handleDelete = async (id) => {
     if (!window.confirm('Confirma eliminar este usuario? Esta acción no se puede deshacer.')) return;
     try {
-      const res = await fetch(`/api/users/${id}`, { method: 'DELETE', credentials: 'include' });
+  const res = await apiRequest(`/api/users/${id}`, { method: 'DELETE' });
       if (res.ok) {
         alert('Usuario eliminado');
         setUsers(prev => prev.filter(u => u.id !== id));
@@ -162,7 +163,7 @@ const AdminUsers = ({ onClose }) => {
     if (!username || !password) return alert('username y password requeridos');
     const body = { username, password, roleId: roleId || null, permissionIds: Array.from(checked) };
     try {
-      const res = await fetch('/api/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(body) });
+  const res = await apiRequest('/api/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       if (res.ok) {
         alert('Usuario creado');
         const created = await res.json();
