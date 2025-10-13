@@ -3,6 +3,10 @@ import './PedidoForm.css';
 import apiRequest from '../apiRequest';
 
 const PedidoPrintView = ({ pedido }) => {
+  // Debug visual: log pedido recibido
+  if (window && window.console) {
+    console.log('Pedido recibido en PrintView:', pedido);
+  }
   // siempre declarar hooks en el tope del componente para cumplir las reglas de hooks
   const [productos, setProductos] = useState([]);
 
@@ -64,6 +68,10 @@ const PedidoPrintView = ({ pedido }) => {
     return () => { mounted = false; };
   }, [pedido]);
 
+  // Fallback visual si el pedido es nulo o vacío
+  if (!pedido || Object.keys(pedido).length === 0) {
+    return <div style={{ padding: 32, textAlign: 'center', color: '#b00', fontWeight: 600 }}>No se pudo cargar el pedido. Verifica la conexión o los datos.</div>;
+  }
   return (
     <div className="pedido-print-view" style={{ width: '100%', padding: '10px', boxSizing: 'border-box' }}>
       <div className="top-section" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -112,7 +120,7 @@ const PedidoPrintView = ({ pedido }) => {
             </tr>
           </thead>
           <tbody>
-            {productos && productos.length > 0 ? productos.map((p, i) => (
+            {Array.isArray(productos) && productos.length > 0 ? productos.map((p, i) => (
               <tr key={i}>
                 <td className="td-center">{p.cantidad}</td>
                 <td className="td-center">{p.codigo}</td>
@@ -122,7 +130,7 @@ const PedidoPrintView = ({ pedido }) => {
               </tr>
             )) : (
               <tr>
-                <td colSpan={5} className="td-center">No hay productos</td>
+                <td colSpan={5} className="td-center" style={{ color: '#b00', fontWeight: 600 }}>No hay productos en este pedido.</td>
               </tr>
             )}
           </tbody>
