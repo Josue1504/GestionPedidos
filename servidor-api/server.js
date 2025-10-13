@@ -243,12 +243,15 @@ app.get('/api/me', isAuthenticated, async (req, res) => {
     try {
         if (!db) {
             // Modo prueba
-            return res.json({ id: 1, username: req.session.username || 'admin' });
+            return res.json({ id: 1, username: req.session.username || 'admin', roles: ['admin'] });
         }
         const result = await dbQuery('SELECT id, username FROM users WHERE id = $1', [req.session.userId]);
         if (result.rows.length === 0) return res.status(404).json({ message: 'Usuario no encontrado' });
         const { id, username } = result.rows[0];
-        res.json({ id, username });
+        // Obtener roles
+        const rolesRes = await dbQuery('SELECT r.name FROM user_roles ur JOIN roles r ON ur.role_id = r.id WHERE ur.user_id = $1', [id]);
+        const roles = rolesRes.rows.map(r => r.name);
+        res.json({ id, username, roles });
     } catch (error) {
         console.error('Error en /api/me:', error);
         res.status(500).json({ error: 'Error interno en /api/me' });
