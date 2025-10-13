@@ -105,7 +105,19 @@ const dbQuery = (text, params) => {
 
 // --- Middlewares de autenticación ---
 const isAuthenticated = (req, res, next) => {
-    if (req.session && req.session.userId) return next();
+    console.log('🔍 Auth check:', { 
+        sessionId: req.session?.id, 
+        userId: req.session?.userId, 
+        username: req.session?.username,
+        path: req.path 
+    });
+    
+    if (req.session && req.session.userId) {
+        console.log('✅ User authenticated:', req.session.username);
+        return next();
+    }
+    
+    console.log('❌ User not authenticated for path:', req.path);
     return res.status(401).json({ message: 'No autenticado' });
 };
 
@@ -169,47 +181,68 @@ app.get('/', (req, res) => {
 // --- INICIO DE SESIÓN ---
 app.post('/api/login', async (req, res) => {
     try {
-        // Log solo el usuario (evitar imprimir contraseñas)
-        console.log('Login attempt for user:', req.body && req.body.username);
+        // Log detallado para depuración
+        console.log('🔍 Login attempt:', { 
+            user: req.body?.username, 
+            sessionId: req.session?.id,
+            hasPassword: !!req.body?.password 
+        });
+        
         const { username, password } = req.body;
         const uname = (username || '').trim();
         const pwd = (password || '');
 
         if (!uname || !pwd) {
+            console.log('❌ Login failed: Missing credentials');
             return res.status(400).json({ message: 'Usuario y contraseña requeridos' });
         }
 
         // Si no hay base de datos, usar login de prueba
         if (!db) {
+            console.log('🔍 Using test mode (no DB)');
             if (uname === 'admin' && pwd === '123') {
                 req.session.userId = 1;
                 req.session.username = 'admin';
+                console.log('✅ Test login successful:', { user: uname, sessionId: req.session.id });
                 return res.json({ 
                     message: 'Login exitoso (modo prueba)',
                     user: { id: 1, username: 'admin' }
                 });
             } else {
+                console.log('❌ Test login failed: Invalid credentials');
                 return res.status(401).json({ message: 'Credenciales inválidas' });
             }
         }
 
         // Login con base de datos real
+        console.log('🔍 Checking user in database:', uname);
         const result = await dbQuery('SELECT * FROM users WHERE username = $1', [uname]);
         
         if (result.rows.length === 0) {
+            console.log('❌ User not found in database');
             return res.status(401).json({ message: 'Credenciales inválidas' });
         }
 
         const user = result.rows[0];
-    const isPasswordValid = await bcrypt.compare(pwd, user.password_hash);
+        console.log('🔍 User found:', { id: user.id, username: user.username, active: user.active });
+        
+        const isPasswordValid = await bcrypt.compare(pwd, user.password_hash);
+        console.log('🔍 Password validation:', isPasswordValid);
 
         if (!isPasswordValid) {
+            console.log('❌ Invalid password');
             return res.status(401).json({ message: 'Credenciales inválidas' });
         }
 
         // Guardar en sesión
         req.session.userId = user.id;
         req.session.username = user.username;
+        
+        console.log('✅ Login successful:', { 
+            user: user.username, 
+            id: user.id, 
+            sessionId: req.session.id 
+        });
 
         res.json({ 
             message: 'Inicio de sesión exitoso',
@@ -217,7 +250,7 @@ app.post('/api/login', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error en login:', error);
+        console.error('❌ Error en login:', error);
         res.status(500).json({ error: 'Error interno en login' });
     }
 });
@@ -242,19 +275,34 @@ app.post('/api/logout', (req, res) => {
 // --- USUARIO ACTUAL ---
 app.get('/api/me', isAuthenticated, async (req, res) => {
     try {
+        console.log('🔍 /api/me called:', { userId: req.session.userId, username: req.session.username });
+        
         if (!db) {
             // Modo prueba
-            return res.json({ id: 1, username: req.session.username || 'admin', roles: ['admin'] });
+            const testUser = { id: 1, username: req.session.username || 'admin', roles: ['admin'] };
+            console.log('✅ /api/me test mode response:', testUser);
+            return res.json(testUser);
         }
+        
         const result = await dbQuery('SELECT id, username FROM users WHERE id = $1', [req.session.userId]);
-        if (result.rows.length === 0) return res.status(404).json({ message: 'Usuario no encontrado' });
+        if (result.rows.length === 0) {
+            console.log('❌ /api/me: User not found');
+            return res.status(404).json({ message: 'Usuario no encontrado' });
+        }
+        
         const { id, username } = result.rows[0];
+        console.log('🔍 User data from DB:', { id, username });
+        
         // Obtener roles
         const rolesRes = await dbQuery('SELECT r.name FROM user_roles ur JOIN roles r ON ur.role_id = r.id WHERE ur.user_id = $1', [id]);
         const roles = rolesRes.rows.map(r => r.name);
-        res.json({ id, username, roles });
+        console.log('🔍 User roles:', roles);
+        
+        const responseData = { id, username, roles };
+        console.log('✅ /api/me response:', responseData);
+        res.json(responseData);
     } catch (error) {
-        console.error('Error en /api/me:', error);
+        console.error('❌ Error en /api/me:', error);
         res.status(500).json({ error: 'Error interno en /api/me' });
     }
 });
