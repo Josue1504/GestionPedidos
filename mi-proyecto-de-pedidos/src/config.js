@@ -4,7 +4,8 @@ const config = {
     API_BASE_URL: '', // Usar proxy local
   },
   production: {
-    API_BASE_URL: process.env.REACT_APP_API_URL || 'https://gestionpedidos-1-be.onrender.com',
+    // Preferir variable de entorno; fallback al dominio real del backend en Render
+    API_BASE_URL: process.env.REACT_APP_API_URL || 'https://gestionpedidos-1.onrender.com',
   }
 };
 

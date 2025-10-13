@@ -9,49 +9,51 @@ require('dotenv').config();
 
 const app = express();
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-    console.error('Error:', err);
-    res.status(500).json({ error: 'Internal server error' });
-});
-
 // --- Configuración de CORS con credenciales ---
+// Permitimos explícitamente el dominio del frontend y localhost
+const allowedOrigins = [
+    process.env.FRONTEND_URL,
+    'https://gestionpedidos-1-fe.onrender.com',
+    'http://localhost:3000'
+].filter(Boolean);
+
 const corsOptions = {
-    origin: true, // Permitir todos los orígenes temporalmente
+    origin: (origin, callback) => {
+        // Permitir llamadas sin origin (como Postman/health checks)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.includes(origin)) return callback(null, true);
+        return callback(new Error(`Not allowed by CORS: ${origin}`));
+    },
     credentials: true,
-    optionsSuccessStatus: 200,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
+    exposedHeaders: ['Set-Cookie'],
+    optionsSuccessStatus: 200
 };
+
 app.use(cors(corsOptions));
-
-// Manejo genérico de preflight OPTIONS (compatible con Express 5)
-app.use((req, res, next) => {
-    if (req.method === 'OPTIONS') {
-        const origin = req.headers.origin;
-        if (origin) {
-            res.header('Access-Control-Allow-Origin', origin);
-            res.header('Vary', 'Origin');
-        }
-        res.header('Access-Control-Allow-Credentials', 'true');
-        res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
-        res.header('Access-Control-Allow-Headers', req.headers['access-control-request-headers'] || 'Content-Type, Authorization, X-Requested-With');
-        return res.sendStatus(204);
-    }
-    next();
-});
-
-// Debug CORS
-app.use((req, res, next) => {
-    console.log(`Origin: ${req.headers.origin}`);
-    console.log(`FRONTEND_URL: ${process.env.FRONTEND_URL}`);
-    next();
-});
+// Responder preflight de todas las rutas
+app.options('*', cors(corsOptions));
 
 // --- Habilitar el uso de JSON para las peticiones ---
 app.use(express.json());
 
-// Logging middleware
+// --- Middleware de sesión (debe ir ANTES de las rutas que la usan) ---
+const isProduction = process.env.NODE_ENV === 'production';
+app.set('trust proxy', 1);
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'tu_secreto_de_sesion',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: isProduction,
+        httpOnly: true,
+        sameSite: isProduction ? 'none' : 'lax',
+        maxAge: 24 * 60 * 60 * 1000
+    }
+}));
+
+// Logging básico
 app.use((req, res, next) => {
     console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
     next();
@@ -93,6 +95,12 @@ const dbQuery = (text, params) => {
             }
         });
     });
+};
+
+// --- Middlewares de autenticación ---
+const isAuthenticated = (req, res, next) => {
+    if (req.session && req.session.userId) return next();
+    return res.status(401).json({ message: 'No autenticado' });
 };
 
 // Ruta raíz para verificar que el servidor funciona
@@ -183,20 +191,22 @@ app.post('/api/logout', (req, res) => {
     }
 });
 
-// --- Middleware de sesión ---
-const isProduction = process.env.NODE_ENV === 'production';
-app.set('trust proxy', 1);
-app.use(session({
-    secret: process.env.SESSION_SECRET || 'tu_secreto_de_sesion',
-    resave: false,
-    saveUninitialized: false,
-    cookie: { 
-        secure: isProduction,
-        httpOnly: true,
-        sameSite: isProduction ? 'none' : 'lax',
-        maxAge: 24 * 60 * 60 * 1000 
+// --- USUARIO ACTUAL ---
+app.get('/api/me', isAuthenticated, async (req, res) => {
+    try {
+        if (!db) {
+            // Modo prueba
+            return res.json({ id: 1, username: req.session.username || 'admin' });
+        }
+        const result = await dbQuery('SELECT id, username FROM users WHERE id = $1', [req.session.userId]);
+        if (result.rows.length === 0) return res.status(404).json({ message: 'Usuario no encontrado' });
+        const { id, username } = result.rows[0];
+        res.json({ id, username });
+    } catch (error) {
+        console.error('Error en /api/me:', error);
+        res.status(500).json({ error: 'Error interno en /api/me' });
     }
-}));
+});
 
 // Ruta de salud
 app.get('/api/health', (req, res) => {
@@ -221,6 +231,16 @@ app.use((req, res) => {
         path: req.originalUrl,
         message: 'API endpoint not found'
     });
+});
+
+// Error handling middleware (debe ir al final)
+app.use((err, req, res, next) => {
+    console.error('Error:', err);
+    // Para errores CORS, responder con cabeceras mínimas
+    if (err.message && err.message.startsWith('Not allowed by CORS')) {
+        return res.status(403).json({ error: err.message });
+    }
+    res.status(500).json({ error: 'Internal server error' });
 });
 
 const PORT = process.env.PORT || 5000;
