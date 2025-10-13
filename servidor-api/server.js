@@ -17,23 +17,22 @@ app.use((err, req, res, next) => {
 
 // --- Configuración de CORS con credenciales ---
 const corsOptions = {
-    origin: (origin, callback) => {
-        const allowedOrigins = [
-            'http://localhost:3000',
-            'https://gestionpedidos-1-fe.onrender.com',
-            process.env.FRONTEND_URL?.replace(/\/$/, '')
-        ].filter(Boolean);
-        
-        if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
+    origin: true, // Permitir todos los orígenes temporalmente
     credentials: true,
-    optionsSuccessStatus: 200
+    optionsSuccessStatus: 200,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 };
 app.use(cors(corsOptions));
+
+// Manejo manual de preflight OPTIONS
+app.options('*', (req, res) => {
+    res.header('Access-Control-Allow-Origin', req.headers.origin);
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
+    res.header('Access-Control-Allow-Credentials', true);
+    res.sendStatus(200);
+});
 
 // Debug CORS
 app.use((req, res, next) => {
