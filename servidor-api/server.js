@@ -113,10 +113,24 @@ const isAuthenticated = (req, res, next) => {
     });
     
     if (req.session && req.session.userId) {
-        console.log('✅ User authenticated:', req.session.username);
-        return next();
+        // Verificar si el usuario está activo en cada request
+        dbQuery('SELECT active FROM users WHERE id = $1', [req.session.userId])
+            .then(result => {
+                const active = result.rows[0]?.active;
+                if (!active || active === 0) {
+                    console.log('❌ Usuario inactivo, expulsando de la sesión');
+                    req.session.destroy(() => {});
+                    return res.status(403).json({ message: 'Usuario inactivo. Contacta al administrador.' });
+                }
+                console.log('✅ User authenticated:', req.session.username);
+                return next();
+            })
+            .catch(err => {
+                console.error('Error verificando usuario activo:', err);
+                return res.status(500).json({ message: 'Error interno de autenticación' });
+            });
+        return;
     }
-    
     console.log('❌ User not authenticated for path:', req.path);
     return res.status(401).json({ message: 'No autenticado' });
 };
