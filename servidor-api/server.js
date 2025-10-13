@@ -294,8 +294,8 @@ app.get('/api/me', isAuthenticated, async (req, res) => {
         console.log('🔍 User data from DB:', { id, username });
         
         // Obtener roles
-        const rolesRes = await dbQuery('SELECT r.name FROM user_roles ur JOIN roles r ON ur.role_id = r.id WHERE ur.user_id = $1', [id]);
-        const roles = rolesRes.rows.map(r => r.name);
+    const rolesRes = await dbQuery('SELECT r.name FROM user_roles ur JOIN roles r ON ur.role_id = r.id WHERE ur.user_id = $1', [id]);
+    let roles = rolesRes.rows.map(r => r.name);
         console.log('🔍 User roles:', roles);
         
         const responseData = { id, username, roles };
@@ -447,11 +447,29 @@ app.put('/api/users/:id', isAuthenticated, requirePermission('users.manage'), as
             const hash = await bcrypt.hash(password, 10);
             await dbQuery('UPDATE users SET password_hash = $1 WHERE id = $2', [hash, id]);
         }
-        // actualizar rol único: limpiar y asignar si viene
-        await dbQuery('DELETE FROM user_roles WHERE user_id = $1', [id]);
+        // actualizar rol único: solo si roleId viene; proteger contra quitar el último admin
         if (roleId !== null && roleId !== undefined && roleId !== '') {
             const rid = Number(roleId);
             if (!Number.isNaN(rid)) {
+                // Obtener role_id de admin
+                const adminRole = await dbQuery("SELECT id FROM roles WHERE name = 'admin' LIMIT 1");
+                const adminRoleId = adminRole.rows[0]?.id;
+                // ¿El usuario actualmente es admin?
+                let isUserAdmin = false;
+                if (adminRoleId) {
+                    const isAdminRes = await dbQuery('SELECT 1 FROM user_roles WHERE user_id = $1 AND role_id = $2 LIMIT 1', [id, adminRoleId]);
+                    isUserAdmin = isAdminRes.rows.length > 0;
+                }
+                // Si el usuario es admin y lo vamos a cambiar a un rol distinto a admin, verificar que no sea el último admin
+                if (isUserAdmin && adminRoleId && rid !== adminRoleId) {
+                    const countRes = await dbQuery('SELECT COUNT(*)::int AS c FROM user_roles WHERE role_id = $1', [adminRoleId]);
+                    const adminCount = countRes.rows[0]?.c || 0;
+                    if (adminCount <= 1) {
+                        return res.status(400).json({ message: 'No puedes quitar el último administrador' });
+                    }
+                }
+                // Reemplazar roles
+                await dbQuery('DELETE FROM user_roles WHERE user_id = $1', [id]);
                 await dbQuery('INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [id, rid]);
             }
         }
