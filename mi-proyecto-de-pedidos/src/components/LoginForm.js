@@ -6,13 +6,13 @@ const LoginForm = ({ onLoginSuccess }) => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
-    const [isRegistering, setIsRegistering] = useState(false);
+    // Registro deshabilitado: solo login
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
 
-        const endpoint = isRegistering ? '/api/register' : '/api/login';
+    const endpoint = '/api/login';
 
         try {
             const response = await apiRequest(endpoint, {
@@ -26,12 +26,7 @@ const LoginForm = ({ onLoginSuccess }) => {
             const data = await response.json();
 
             if (response.ok) {
-                if (!isRegistering) {
-                    onLoginSuccess();
-                } else {
-                    alert('Usuario registrado con éxito. Ahora puedes iniciar sesión.');
-                    setIsRegistering(false); // Vuelve al modo de login
-                }
+                onLoginSuccess();
             } else {
                 setError(data.message || 'Error de conexión con el servidor. Inténtalo de nuevo.');
             }
@@ -43,7 +38,7 @@ const LoginForm = ({ onLoginSuccess }) => {
 
     return (
         <div className="login-container">
-            <h2>{isRegistering ? 'Crear Usuario' : 'Iniciar Sesión'}</h2>
+            <h2>Iniciar Sesión</h2>
             <form onSubmit={handleSubmit}>
                 <div className="input-group">
                     <label htmlFor="username">Usuario:</label>
@@ -66,16 +61,7 @@ const LoginForm = ({ onLoginSuccess }) => {
                     />
                 </div>
                 {error && <p className="error-message">{error}</p>}
-                <button type="submit">
-                    {isRegistering ? 'Registrar' : 'Entrar'}
-                </button>
-                <button
-                    type="button"
-                    className="toggle-button"
-                    onClick={() => setIsRegistering(!isRegistering)}
-                >
-                    {isRegistering ? 'Volver al Login' : 'Crear un nuevo usuario'}
-                </button>
+                <button type="submit">Entrar</button>
             </form>
         </div>
     );
