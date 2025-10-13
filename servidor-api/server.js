@@ -390,6 +390,27 @@ app.get('/api/pedidos', isAuthenticated, async (req, res) => {
         res.status(500).json({ message: 'Error interno' });
     }
 });
+// Endpoint para obtener todos los permisos
+app.get('/api/permissions', isAuthenticated, async (req, res) => {
+    try {
+        const result = await dbQuery('SELECT id, name, description FROM permissions ORDER BY id');
+        res.json(result.rows);
+    } catch (e) {
+        console.error('Error en /api/permissions:', e);
+        res.status(500).json({ error: 'Error al obtener permisos' });
+    }
+});
+
+// Endpoint para obtener todos los roles
+app.get('/api/roles', isAuthenticated, async (req, res) => {
+    try {
+        const result = await dbQuery('SELECT id, name, description FROM roles ORDER BY id');
+        res.json(result.rows);
+    } catch (e) {
+        console.error('Error en /api/roles:', e);
+        res.status(500).json({ error: 'Error al obtener roles' });
+    }
+});
 
 app.post('/api/pedidos', isAuthenticated, requirePermission('pedidos.create'), async (req, res) => {
     try {
