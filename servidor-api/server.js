@@ -386,11 +386,14 @@ app.get('/api/users/:id', isAuthenticated, requirePermission('users.manage'), as
         const base = userRes.rows[0];
         const rolesRes = await dbQuery('SELECT r.id, r.name FROM user_roles ur JOIN roles r ON ur.role_id = r.id WHERE ur.user_id = $1', [id]);
         const permsRes = await dbQuery('SELECT permission_id FROM user_permissions WHERE user_id = $1', [id]);
+        // Elegimos el primer rol como principal para edición
+        const primaryRoleId = rolesRes.rows[0]?.id || null;
         res.json({ 
             id: base.id, 
             username: base.username, 
             active: base.active === 1 || base.active === true, 
             roles: rolesRes.rows.map(r => r.name),
+            roleId: primaryRoleId,
             permissionIds: permsRes.rows.map(p => p.permission_id)
         });
     } catch (e) {
@@ -408,13 +411,19 @@ app.post('/api/users', isAuthenticated, requirePermission('users.manage'), async
         const insertUser = await dbQuery('INSERT INTO users (username, password_hash, active) VALUES ($1, $2, 1) RETURNING id', [username, hash]);
         const userId = insertUser.rows[0].id;
         // rol opcional
-        if (roleId) {
-            await dbQuery('INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [userId, Number(roleId)]);
+        if (roleId !== null && roleId !== undefined && roleId !== '') {
+            const rid = Number(roleId);
+            if (!Number.isNaN(rid)) {
+                await dbQuery('INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [userId, rid]);
+            }
         }
         // permisos opcionales
         if (Array.isArray(permissionIds) && permissionIds.length) {
             for (const pid of permissionIds) {
-                await dbQuery('INSERT INTO user_permissions (user_id, permission_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [userId, Number(pid)]);
+                const pnum = Number(pid);
+                if (!Number.isNaN(pnum)) {
+                    await dbQuery('INSERT INTO user_permissions (user_id, permission_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [userId, pnum]);
+                }
             }
         }
         res.json({ ok: true, userId });
@@ -440,14 +449,20 @@ app.put('/api/users/:id', isAuthenticated, requirePermission('users.manage'), as
         }
         // actualizar rol único: limpiar y asignar si viene
         await dbQuery('DELETE FROM user_roles WHERE user_id = $1', [id]);
-        if (roleId) {
-            await dbQuery('INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [id, Number(roleId)]);
+        if (roleId !== null && roleId !== undefined && roleId !== '') {
+            const rid = Number(roleId);
+            if (!Number.isNaN(rid)) {
+                await dbQuery('INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [id, rid]);
+            }
         }
         // actualizar permisos directos: reemplazar por los enviados
         await dbQuery('DELETE FROM user_permissions WHERE user_id = $1', [id]);
         if (Array.isArray(permissionIds) && permissionIds.length) {
             for (const pid of permissionIds) {
-                await dbQuery('INSERT INTO user_permissions (user_id, permission_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [id, Number(pid)]);
+                const pnum = Number(pid);
+                if (!Number.isNaN(pnum)) {
+                    await dbQuery('INSERT INTO user_permissions (user_id, permission_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [id, pnum]);
+                }
             }
         }
         res.json({ ok: true });
