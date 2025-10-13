@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './ReportesPedidos.css';
+import apiRequest from '../apiRequest';
 
 const ReportesPedidos = ({ onClose }) => {
   const [users, setUsers] = useState([]);
@@ -12,7 +13,7 @@ const ReportesPedidos = ({ onClose }) => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetch('/api/users', { credentials: 'include' })
+    apiRequest('/api/users')
       .then(r => r.json())
       .then(j => setUsers(Array.isArray(j) ? j : (j && j.users ? j.users : [])))
       .catch(() => setUsers([]));
@@ -31,8 +32,8 @@ const ReportesPedidos = ({ onClose }) => {
         params.append('fromDate', selectedDate);
         params.append('toDate', selectedDate);
       }
-      const url = `/api/pedidos?${params.toString()}`;
-      const res = await fetch(url, { credentials: 'include' });
+  const url = `/api/pedidos?${params.toString()}`;
+  const res = await apiRequest(url);
       const j = await res.json();
       setPedidos(j.pedidos || []);
       setTotal(j.total || 0);

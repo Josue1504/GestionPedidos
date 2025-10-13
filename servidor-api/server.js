@@ -108,6 +108,45 @@ const isAuthenticated = (req, res, next) => {
     return res.status(401).json({ message: 'No autenticado' });
 };
 
+// --- Autorización por permisos ---
+const hasPermission = async (userId, permissionName) => {
+    try {
+        // Si es admin por rol, permitir todo
+        const adminRole = await dbQuery(
+            'SELECT 1 FROM user_roles ur JOIN roles r ON ur.role_id = r.id WHERE ur.user_id = $1 AND r.name = $2 LIMIT 1',
+            [userId, 'admin']
+        );
+        if (adminRole.rows.length > 0) return true;
+
+        // Verificar permisos directos y por roles
+        const result = await dbQuery(
+            `SELECT DISTINCT p.name
+             FROM permissions p
+             LEFT JOIN user_permissions up ON p.id = up.permission_id AND up.user_id = $1
+             LEFT JOIN role_permissions rp ON p.id = rp.permission_id
+             LEFT JOIN user_roles ur ON rp.role_id = ur.role_id AND ur.user_id = $1
+             WHERE (up.user_id IS NOT NULL OR ur.user_id IS NOT NULL) AND p.name = $2`,
+            [userId, permissionName]
+        );
+        return result.rows.length > 0;
+    } catch (e) {
+        console.error('Error verificando permisos:', e);
+        return false;
+    }
+};
+
+const requirePermission = (permissionName) => async (req, res, next) => {
+    try {
+        if (!(req.session && req.session.userId)) return res.status(401).json({ message: 'No autenticado' });
+        const ok = await hasPermission(req.session.userId, permissionName);
+        if (ok) return next();
+        return res.status(403).json({ message: 'No tienes permisos para realizar esta acción' });
+    } catch (e) {
+        console.error('Error en requirePermission:', e);
+        return res.status(500).json({ message: 'Error interno de permisos' });
+    }
+};
+
 // Ruta raíz para verificar que el servidor funciona
 app.get('/', (req, res) => {
     try {
@@ -129,16 +168,19 @@ app.get('/', (req, res) => {
 // --- INICIO DE SESIÓN ---
 app.post('/api/login', async (req, res) => {
     try {
-        console.log('Login attempt:', req.body);
+        // Log solo el usuario (evitar imprimir contraseñas)
+        console.log('Login attempt for user:', req.body && req.body.username);
         const { username, password } = req.body;
+        const uname = (username || '').trim();
+        const pwd = (password || '');
 
-        if (!username || !password) {
+        if (!uname || !pwd) {
             return res.status(400).json({ message: 'Usuario y contraseña requeridos' });
         }
 
         // Si no hay base de datos, usar login de prueba
         if (!db) {
-            if (username === 'admin' && password === '123') {
+            if (uname === 'admin' && pwd === '123') {
                 req.session.userId = 1;
                 req.session.username = 'admin';
                 return res.json({ 
@@ -151,14 +193,14 @@ app.post('/api/login', async (req, res) => {
         }
 
         // Login con base de datos real
-        const result = await dbQuery('SELECT * FROM users WHERE username = $1', [username]);
+        const result = await dbQuery('SELECT * FROM users WHERE username = $1', [uname]);
         
         if (result.rows.length === 0) {
             return res.status(401).json({ message: 'Credenciales inválidas' });
         }
 
         const user = result.rows[0];
-        const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+    const isPasswordValid = await bcrypt.compare(pwd, user.password_hash);
 
         if (!isPasswordValid) {
             return res.status(401).json({ message: 'Credenciales inválidas' });
@@ -259,4 +301,170 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`⏰ Iniciado en: ${new Date().toISOString()}`);
 }).on('error', (err) => {
     console.error('❌ Error al iniciar servidor:', err);
+});
+
+// --- CHEQUEO DE PERMISOS ---
+app.get('/api/has-permission', isAuthenticated, async (req, res) => {
+    try {
+        const name = (req.query.name || '').toString();
+        if (!name) return res.json({ ok: false });
+        const ok = await hasPermission(req.session.userId, name);
+        res.json({ ok });
+    } catch (e) {
+        console.error('Error en /api/has-permission:', e);
+        res.status(500).json({ ok: false });
+    }
+});
+
+// --- PRODUCTOS (inventario) ---
+app.get('/api/productos/:code', isAuthenticated, async (req, res) => {
+    try {
+        const code = (req.params.code || '').toString().trim().toUpperCase();
+        if (!code) return res.status(400).json({ message: 'Código requerido' });
+        const result = await dbQuery('SELECT codigo_producto, descripcion FROM inventario_productos WHERE codigo_producto = $1', [code]);
+        if (result.rows.length === 0) return res.status(404).json({ message: 'Producto no encontrado' });
+        res.json(result.rows[0]);
+    } catch (e) {
+        console.error('Error en /api/productos/:code', e);
+        res.status(500).json({ message: 'Error interno' });
+    }
+});
+
+// --- USUARIOS (para reportes) ---
+app.get('/api/users', isAuthenticated, requirePermission('users.manage'), async (req, res) => {
+    try {
+        const result = await dbQuery('SELECT id, username FROM users ORDER BY username ASC', []);
+        res.json(result.rows);
+    } catch (e) {
+        console.error('Error en /api/users:', e);
+        res.status(500).json({ message: 'Error interno' });
+    }
+});
+
+// --- PEDIDOS ---
+app.get('/api/pedidos', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.session.userId;
+        const canViewAll = await hasPermission(userId, 'pedidos.view_all');
+        const { created_by, fromDate, toDate, page = 1, pageSize = 100 } = req.query;
+
+        const where = [];
+        const params = [];
+        let idx = 1;
+
+        if (!canViewAll) {
+            where.push(`created_by = $${idx++}`);
+            params.push(userId);
+        } else if (created_by) {
+            where.push(`created_by = $${idx++}`);
+            params.push(Number(created_by));
+        }
+        if (fromDate) {
+            where.push(`fecha_creacion::date >= $${idx++}`);
+            params.push(fromDate);
+        }
+        if (toDate) {
+            where.push(`fecha_creacion::date <= $${idx++}`);
+            params.push(toDate);
+        }
+
+        const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+        const countSql = `SELECT COUNT(*)::int AS c FROM pedidos ${whereSql}`;
+        const countRes = await dbQuery(countSql, params);
+        const total = countRes.rows[0]?.c || 0;
+
+        const p = Math.max(1, parseInt(page));
+        const ps = Math.max(1, Math.min(500, parseInt(pageSize)));
+        const offset = (p - 1) * ps;
+
+        const listSql = `SELECT id, pedidoNo, nombre_cliente, nit_cliente, direccion_cliente, tel_cliente, total_q, fecha_creacion
+                         FROM pedidos ${whereSql} ORDER BY fecha_creacion DESC LIMIT ${ps} OFFSET ${offset}`;
+        const listRes = await dbQuery(listSql, params);
+        res.json({ pedidos: listRes.rows, total, page: p, pageSize: ps });
+    } catch (e) {
+        console.error('Error en GET /api/pedidos:', e);
+        res.status(500).json({ message: 'Error interno' });
+    }
+});
+
+app.post('/api/pedidos', isAuthenticated, requirePermission('pedidos.create'), async (req, res) => {
+    try {
+        const userId = req.session.userId;
+        const { pedidoNo, clienteData, productos, finalData, fecha } = req.body || {};
+
+        const nombre_cliente = clienteData?.nombre || '';
+        const nit_cliente = clienteData?.nit || '';
+        const direccion_cliente = clienteData?.direccion || '';
+        const tel_cliente = clienteData?.tel || '';
+        const envio_no = clienteData?.envioNo || '';
+        const transporte = clienteData?.transporte || '';
+        const vendedor = clienteData?.vendedor || '';
+        const codigo_cliente = clienteData?.codigoCliente || '';
+
+        let total_q = 0;
+        if (Array.isArray(productos)) {
+            for (const p of productos) {
+                total_q += parseFloat(p?.valor || 0) || 0;
+            }
+        }
+        const total_letras = finalData?.totalLetras || '';
+
+        const insertSql = `INSERT INTO pedidos (
+            pedidoNo, nombre_cliente, nit_cliente, direccion_cliente, tel_cliente,
+            envio_no, transporte, vendedor, codigo_cliente,
+            total_letras, total_q, factura_no, autorizado, productos_json, created_by
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING id`;
+
+        const params = [
+            pedidoNo || null,
+            nombre_cliente,
+            nit_cliente,
+            direccion_cliente,
+            tel_cliente,
+            envio_no,
+            transporte,
+            vendedor,
+            codigo_cliente,
+            total_letras,
+            total_q,
+            finalData?.facturaNo || null,
+            finalData?.autorizado || null,
+            JSON.stringify({ productos, fecha }),
+            userId
+        ];
+
+        const result = await dbQuery(insertSql, params);
+        res.status(201).json({ id: result.rows[0].id, message: 'Pedido creado exitosamente' });
+    } catch (e) {
+        console.error('Error en POST /api/pedidos:', e);
+        res.status(500).json({ message: 'Error interno' });
+    }
+});
+
+app.put('/api/pedidos/:id', isAuthenticated, requirePermission('pedidos.edit'), async (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+        const { nombre_cliente, nit_cliente, direccion_cliente, total_q } = req.body || {};
+        const sql = `UPDATE pedidos SET nombre_cliente = COALESCE($1,nombre_cliente), nit_cliente = COALESCE($2,nit_cliente),
+                     direccion_cliente = COALESCE($3,direccion_cliente), total_q = COALESCE($4,total_q)
+                     WHERE id = $5 RETURNING id`;
+        const r = await dbQuery(sql, [nombre_cliente || null, nit_cliente || null, direccion_cliente || null, total_q || null, id]);
+        if (r.rows.length === 0) return res.status(404).json({ message: 'Pedido no encontrado' });
+        res.json({ id });
+    } catch (e) {
+        console.error('Error en PUT /api/pedidos/:id', e);
+        res.status(500).json({ message: 'Error interno' });
+    }
+});
+
+app.delete('/api/pedidos/:id', isAuthenticated, requirePermission('pedidos.delete'), async (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+        const r = await dbQuery('DELETE FROM pedidos WHERE id = $1', [id]);
+        res.json({ ok: true });
+    } catch (e) {
+        console.error('Error en DELETE /api/pedidos/:id', e);
+        res.status(500).json({ message: 'Error interno' });
+    }
 });

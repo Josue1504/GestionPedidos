@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './PedidoForm.css';
 import diferLogo from './assets/difer.png';
+import apiRequest from '../apiRequest';
 
 // Función para convertir números a letras (maneja números grandes mediante operaciones con cadenas)
 const numberToWords = (input) => {
@@ -173,15 +174,15 @@ const PedidoForm = ({ onViewForm }) => {
     useEffect(() => {
         initializeForm();
         // Check permissions to enable/disable actions
-        fetch('/api/has-permission?name=pedidos.create', { credentials: 'include' })
+        apiRequest('/api/has-permission?name=pedidos.create')
             .then(r => r.json())
             .then(d => setCanCreatePedido(!!d.ok))
             .catch(() => setCanCreatePedido(false));
 
         // A user can view/print pedidos if they have view_own or view_all
         Promise.all([
-            fetch('/api/has-permission?name=pedidos.view_own', { credentials: 'include' }).then(r => r.json()).catch(() => ({ ok: false })),
-            fetch('/api/has-permission?name=pedidos.view_all', { credentials: 'include' }).then(r => r.json()).catch(() => ({ ok: false }))
+            apiRequest('/api/has-permission?name=pedidos.view_own').then(r => r.json()).catch(() => ({ ok: false })),
+            apiRequest('/api/has-permission?name=pedidos.view_all').then(r => r.json()).catch(() => ({ ok: false }))
         ])
         .then(([own, all]) => setCanViewPedidos(!!(own.ok || all.ok)))
         .catch(() => setCanViewPedidos(false));
@@ -236,7 +237,7 @@ const PedidoForm = ({ onViewForm }) => {
         newProductos[index].status = 'buscando';
         setProductos(newProductos);
         try {
-            const res = await fetch(`/api/productos/${encodeURIComponent(c)}`);
+            const res = await apiRequest(`/api/productos/${encodeURIComponent(c)}`);
             if (res.ok) {
                 const data = await res.json();
                 const updated = [...newProductos];
@@ -289,11 +290,10 @@ const PedidoForm = ({ onViewForm }) => {
         console.log("Enviando datos:", pedidoCompleto);
 
         try {
-            const response = await fetch('/api/pedidos', {
+            const response = await apiRequest('/api/pedidos', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(pedidoCompleto),
-                credentials: 'include', // <--- ¡Esta línea es la solución!
             });
 
             if (response.ok) {

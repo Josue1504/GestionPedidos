@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './PedidosList.css'; 
 import PedidoPrintView from './PedidoPrintView';
+import apiRequest from '../apiRequest';
 
 // Modal simple inline (no dependencias externas)
 const Modal = ({ children, onClose }) => (
@@ -23,7 +24,7 @@ const PedidosList = ({ onViewForm, hideCreateButton }) => {
   useEffect(() => {
     const fetchPedidos = async () => {
       try {
-        const response = await fetch('/api/pedidos', { credentials: 'include' });
+  const response = await apiRequest('/api/pedidos');
         if (response.ok) {
           const data = await response.json();
           // Backwards compatibility: server may return an array or a paginated object { pedidos: [], total, page }
@@ -48,11 +49,11 @@ const PedidosList = ({ onViewForm, hideCreateButton }) => {
     setCanDeletePedidos(false);
     setCanViewPedidos(false);
 
-    fetch('/api/has-permission?name=pedidos.edit', { credentials: 'include' }).then(r => r.json()).then(d => setCanEditPedidos(!!d.ok)).catch(() => setCanEditPedidos(false));
-    fetch('/api/has-permission?name=pedidos.delete', { credentials: 'include' }).then(r => r.json()).then(d => setCanDeletePedidos(!!d.ok)).catch(() => setCanDeletePedidos(false));
+  apiRequest('/api/has-permission?name=pedidos.edit').then(r => r.json()).then(d => setCanEditPedidos(!!d.ok)).catch(() => setCanEditPedidos(false));
+  apiRequest('/api/has-permission?name=pedidos.delete').then(r => r.json()).then(d => setCanDeletePedidos(!!d.ok)).catch(() => setCanDeletePedidos(false));
     Promise.all([
-      fetch('/api/has-permission?name=pedidos.view_own', { credentials: 'include' }).then(r => r.json()).catch(() => ({ ok: false })),
-      fetch('/api/has-permission?name=pedidos.view_all', { credentials: 'include' }).then(r => r.json()).catch(() => ({ ok: false }))
+  apiRequest('/api/has-permission?name=pedidos.view_own').then(r => r.json()).catch(() => ({ ok: false })),
+  apiRequest('/api/has-permission?name=pedidos.view_all').then(r => r.json()).catch(() => ({ ok: false }))
     ]).then(([own, all]) => setCanViewPedidos(!!(own.ok || all.ok))).catch(() => setCanViewPedidos(false));
 
     fetchPedidos();
@@ -71,7 +72,7 @@ const PedidosList = ({ onViewForm, hideCreateButton }) => {
   const handleDelete = async (pedido) => {
     if (!window.confirm('¿Eliminar este pedido? Esta acción no se puede deshacer.')) return;
     try {
-      const res = await fetch(`/api/pedidos/${pedido.id}`, { method: 'DELETE', credentials: 'include' });
+  const res = await apiRequest(`/api/pedidos/${pedido.id}`, { method: 'DELETE' });
       if (res.ok) {
         setPedidos(prev => prev.filter(p => p.id !== pedido.id));
       } else {
@@ -86,10 +87,9 @@ const PedidosList = ({ onViewForm, hideCreateButton }) => {
   const handleSave = async () => {
     // Enviar selected al backend
     try {
-      const res = await fetch(`/api/pedidos/${selected.id}`, {
+      const res = await apiRequest(`/api/pedidos/${selected.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify(selected),
       });
       if (res.ok) {
