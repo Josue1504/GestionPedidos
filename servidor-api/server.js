@@ -74,8 +74,8 @@ const dbQuery = (text, params) => {
 app.get('/', (req, res) => {
     try {
         res.json({ 
-            message: 'API de Gestión de Pedidos está funcionando', 
-            version: '1.0.0',
+            message: 'API de Gestión de Pedidos funcionando correctamente', 
+            version: '1.0.1',
             status: 'ok',
             environment: process.env.NODE_ENV || 'development',
             frontendUrl: process.env.FRONTEND_URL,
