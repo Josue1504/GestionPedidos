@@ -551,8 +551,25 @@ app.get('/api/pedidos', isAuthenticated, async (req, res) => {
         const ps = Math.max(1, Math.min(500, parseInt(pageSize)));
         const offset = (p - 1) * ps;
 
-        const listSql = `SELECT id, pedidoNo, nombre_cliente, nit_cliente, direccion_cliente, tel_cliente, total_q, fecha_creacion
-                         FROM pedidos ${whereSql} ORDER BY fecha_creacion DESC LIMIT ${ps} OFFSET ${offset}`;
+    const listSql = `SELECT 
+                id,
+                pedidoNo AS "pedidoNo",
+                nombre_cliente,
+                nit_cliente,
+                direccion_cliente,
+                tel_cliente,
+                envio_no,
+                transporte,
+                vendedor,
+                codigo_cliente,
+                total_letras,
+                factura_no,
+                autorizado,
+                productos_json,
+                total_q,
+                fecha_creacion
+             FROM pedidos ${whereSql}
+             ORDER BY fecha_creacion DESC LIMIT ${ps} OFFSET ${offset}`;
         const listRes = await dbQuery(listSql, params);
         res.json({ pedidos: listRes.rows, total, page: p, pageSize: ps });
     } catch (e) {
