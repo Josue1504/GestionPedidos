@@ -101,43 +101,67 @@ const PedidoPrintView = ({ pedido }) => {
     return <div style={{ padding: 32, textAlign: 'center', color: '#b00', fontWeight: 600 }}>No se pudo cargar el pedido. Verifica la conexión o los datos.</div>;
   }
   return (
-    <div className="pedido-print-view" style={{ width: '100%', padding: '10px', boxSizing: 'border-box' }}>
-      <div className="top-section" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div className="logo-and-company" style={{ display: 'flex', alignItems: 'center', gap: 20, flex: '1 1 auto' }}>
-          <div className="logo" style={{ flex: '0 0 140px' }}>
-            <img src={require('./assets/difer.png')} alt="Logo" style={{ maxWidth: 120 }} />
+    <div className="pedido-container">
+      <div className="printable-pedido">
+        <div className="top-section">
+          <div className="logo-and-company">
+            <div className="logo">
+              <img src={require('./assets/difer.png')} alt="Logo de DIFER" className="logo-img" />
+            </div>
+            <div className="company-info">
+              <h2>Grupo Comercial Difer, Sociedad Anónima</h2>
+              <p>Colonia el Naranjo, 31 calle 6-21 Int. Bodega 40, zona 4, Mixco Guatemala</p>
+              <p>grupodifer@gmail.com - ventasgrupodifer@gmail.com</p>
+              <p className="pbx">PBX: (502) 2429-4100</p>
+              <p className="business-line">Hierro, Tubería Negra, Galvanizada y Acero al Carbón, Válvulas, Láminas Lisas y Acanaladas, Perfiles, Pinturas y Ferretería en General</p>
+              <p className="location-date">Guatemala, <span className="underline">{new Date(pedido.fecha_creacion).toLocaleDateString()}</span></p>
+            </div>
           </div>
-          <div className="company-info" style={{ flex: '1 1 auto', textAlign: 'center' }}>
-            <h2 style={{ margin: 0 }}>Grupo Comercial Difer, Sociedad Anónima</h2>
-            <p style={{ margin: '4px 0' }}>Colonia el Naranjo, 31 calle 6-21 Int. Bodega 40, zona 4, Mixco Guatemala</p>
-            <p style={{ margin: '2px 0' }}>grupodifer@gmail.com - ventasgrupodifer@gmail.com</p>
-          </div>
-        </div>
-        <div style={{ flex: '0 0 140px', textAlign: 'right' }}>
-          <div className="pedido-box" style={{ display: 'inline-block' }}>
-            <p style={{ margin: 0 }}>PEDIDO NO.</p>
-            <div className="pedido-number-input" style={{ padding: '4px 6px' }}>
+          <div className="pedido-box">
+            <p>PEDIDO NO.</p>
+            <div className="pedido-number-input">
               <p style={{ margin: 0 }}>{pedido.pedidoNo || ''}</p>
             </div>
           </div>
         </div>
+
+      <div className="client-shipping-section">
+        <div className="client-group">
+          <div className="input-line">
+            <label>Nombre:</label>
+            <div style={{ borderBottom: '1px solid #000', padding: '2px 0', flexGrow: 1 }}>{pedido.nombre_cliente || ''}</div>
+          </div>
+          <div className="input-line">
+            <label>Dirección:</label>
+            <div style={{ borderBottom: '1px solid #000', padding: '2px 0', flexGrow: 1 }}>{pedido.direccion_cliente || ''}</div>
+          </div>
+          <div className="input-line">
+            <label>Envío No:</label>
+            <div style={{ borderBottom: '1px solid #000', padding: '2px 0', width: '80px', marginRight: '10px' }}>{pedido.envio_no || ''}</div>
+            <label className="inline-label">Transporte</label>
+            <div style={{ borderBottom: '1px solid #000', padding: '2px 0', width: '120px', marginRight: '10px' }}>{pedido.transporte || ''}</div>
+          </div>
+        </div>
+        <div className="shipping-group">
+          <div className="input-line">
+            <label>NIT:</label>
+            <div style={{ borderBottom: '1px solid #000', padding: '2px 0', flexGrow: 1 }}>{pedido.nit_cliente || ''}</div>
+          </div>
+          <div className="input-line">
+            <label>Tel:</label>
+            <div style={{ borderBottom: '1px solid #000', padding: '2px 0', flexGrow: 1 }}>{pedido.tel_cliente || ''}</div>
+          </div>
+          <div className="input-line">
+            <label className="inline-label">Vendedor</label>
+            <div style={{ borderBottom: '1px solid #000', padding: '2px 0', width: '120px', marginRight: '10px' }}>{pedido.vendedor || ''}</div>
+            <label className="inline-label">Código de Cliente</label>
+            <div style={{ borderBottom: '1px solid #000', padding: '2px 0', width: '80px', marginRight: '10px' }}>{pedido.codigo_cliente || ''}</div>
+          </div>
+        </div>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10 }}>
-        <div style={{ width: '60%' }}>
-          <p><strong>Nombre:</strong> {pedido.nombre_cliente || ''}</p>
-          <p><strong>Dirección:</strong> {pedido.direccion_cliente || ''}</p>
-          <p><strong>Envío No:</strong> {pedido.envio_no || ''} <strong>Transporte:</strong> {pedido.transporte || ''}</p>
-        </div>
-        <div style={{ width: '35%' }}>
-          <p><strong>NIT:</strong> {pedido.nit_cliente || ''}</p>
-          <p><strong>Tel:</strong> {pedido.tel_cliente || ''}</p>
-          <p><strong>Vendedor:</strong> {pedido.vendedor || ''}</p>
-        </div>
-      </div>
-
-      <div className="print-table-section" style={{ marginTop: 12 }}>
-        <table className="print-table">
+      <div className="table-section">
+        <table>
           <thead>
             <tr>
               <th style={{ width: '8%' }}>CANT.</th>
@@ -150,30 +174,35 @@ const PedidoPrintView = ({ pedido }) => {
           <tbody>
             {Array.isArray(productos) && productos.length > 0 ? productos.map((p, i) => (
               <tr key={i}>
-                <td className="td-center">{p.cantidad}</td>
-                <td className="td-center">{p.codigo}</td>
+                <td style={{ textAlign: 'center' }}>{p.cantidad}</td>
+                <td style={{ textAlign: 'center' }}>{p.codigo}</td>
                 <td>{p.descripcion || ''}</td>
-                <td className="td-right">{p.precio}</td>
-                <td className="td-right">{p.valor}</td>
+                <td style={{ textAlign: 'right' }}>{p.precio}</td>
+                <td style={{ textAlign: 'right' }}>{p.valor}</td>
               </tr>
             )) : (
               <tr>
-                <td colSpan={5} className="td-center" style={{ color: '#b00', fontWeight: 600 }}>No hay productos en este pedido.</td>
+                <td colSpan={5} style={{ textAlign: 'center', color: '#b00', fontWeight: 600 }}>No hay productos en este pedido.</td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 12 }}>
-        <div style={{ width: '65%' }}>
-          <p><strong>TOTAL EN LETRAS:</strong></p>
-          <div style={{ border: '1px solid #000', padding: 8, minHeight: 24 }}>{pedido.total_letras || ''}</div>
+      <div className="footer-section">
+        <div className="total-en-letras">
+          <label>TOTAL EN LETRAS:</label>
+          <div className="underline-text">
+            <p style={{ margin: 0 }}>{pedido.total_letras || ''}</p>
+          </div>
         </div>
-        <div style={{ width: '30%' }}>
-          <p><strong>TOTAL Q.</strong></p>
-          <div style={{ border: '1px solid #000', padding: 8, textAlign: 'right' }}>Q. {pedido.total_q || ''}</div>
+        <div className="total-q">
+          <label>TOTAL Q.</label>
+          <div className="total-amount">
+            <div style={{ fontSize: '16px', fontWeight: 'bold', textAlign: 'right' }}>Q. {pedido.total_q || ''}</div>
+          </div>
         </div>
+      </div>
       </div>
     </div>
   );
