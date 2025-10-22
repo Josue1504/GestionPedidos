@@ -20,6 +20,7 @@ const PedidosList = ({ onViewForm, hideCreateButton }) => {
   const [canEditPedidos, setCanEditPedidos] = useState(false);
   const [canDeletePedidos, setCanDeletePedidos] = useState(false);
   const [canViewPedidos, setCanViewPedidos] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const fetchPedidos = async () => {
@@ -48,13 +49,17 @@ const PedidosList = ({ onViewForm, hideCreateButton }) => {
     setCanEditPedidos(false);
     setCanDeletePedidos(false);
     setCanViewPedidos(false);
+    setIsAdmin(false);
 
   apiRequest('/api/has-permission?name=pedidos.edit').then(r => r.json()).then(d => setCanEditPedidos(!!d.ok)).catch(() => setCanEditPedidos(false));
   apiRequest('/api/has-permission?name=pedidos.delete').then(r => r.json()).then(d => setCanDeletePedidos(!!d.ok)).catch(() => setCanDeletePedidos(false));
     Promise.all([
   apiRequest('/api/has-permission?name=pedidos.view_own').then(r => r.json()).catch(() => ({ ok: false })),
   apiRequest('/api/has-permission?name=pedidos.view_all').then(r => r.json()).catch(() => ({ ok: false }))
-    ]).then(([own, all]) => setCanViewPedidos(!!(own.ok || all.ok))).catch(() => setCanViewPedidos(false));
+    ]).then(([own, all]) => {
+      setCanViewPedidos(!!(own.ok || all.ok));
+      setIsAdmin(!!all.ok); // Admin tiene view_all
+    }).catch(() => setCanViewPedidos(false));
 
     fetchPedidos();
   }, []);
@@ -122,6 +127,7 @@ const PedidosList = ({ onViewForm, hideCreateButton }) => {
             <th>NIT</th>
             <th>Total Q.</th>
             <th>Fecha</th>
+            {isAdmin && <th>Creado por</th>}
             <th className="no-print">Acciones</th>
           </tr>
         </thead>
@@ -133,6 +139,7 @@ const PedidosList = ({ onViewForm, hideCreateButton }) => {
               <td>{pedido.nit_cliente}</td>
               <td>Q. {pedido.total_q}</td>
               <td>{new Date(pedido.fecha_creacion).toLocaleDateString()}</td>
+              {isAdmin && <td>{pedido.created_by_username || 'N/A'}</td>}
               <td className="no-print">
                 {canViewPedidos ? (
                   <button onClick={() => openView(pedido)}>Ver</button>
