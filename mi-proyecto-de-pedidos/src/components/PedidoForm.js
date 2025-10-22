@@ -136,8 +136,7 @@ const PedidoForm = ({ onViewForm }) => {
     const initialFinalData = {
         totalLetras: '',
         totalQ: '0.00',
-        facturaNo: '',
-        autorizado: ''
+        observaciones: ''
     };
     const [finalData, setFinalData] = useState(initialFinalData);
     const [errors, setErrors] = useState({});
@@ -507,12 +506,15 @@ const PedidoForm = ({ onViewForm }) => {
                     </div>
                     <div className="signature-lines">
                         <div className="input-line full-width">
-                            <label>Factura No.</label>
-                            <input type="text" name="facturaNo" className="medium-input" value={finalData.facturaNo} onChange={(e) => handleInputChange(e, 'final')} />
-                            <label className="inline-label">Autorizado:</label>
-                            <input type="text" name="autorizado" className="medium-input" value={finalData.autorizado} onChange={(e) => handleInputChange(e, 'final')} />
+                            <label>Observaciones:</label>
+                            <textarea 
+                                name="observaciones" 
+                                value={finalData.observaciones} 
+                                onChange={(e) => handleInputChange(e, 'final')}
+                                style={{ width: '100%', minHeight: '60px', padding: '8px', fontSize: '12px', fontFamily: 'Arial, sans-serif', border: '1px solid #ccc', borderRadius: '4px', resize: 'vertical' }}
+                                placeholder="Escriba aquí cualquier observación o comentario sobre el pedido..."
+                            />
                         </div>
-                        {/* original/duplicado label removed per request */}
                     </div>
                 </div>
 

@@ -583,8 +583,7 @@ app.get('/api/pedidos', isAuthenticated, async (req, res) => {
                 p.vendedor,
                 p.codigo_cliente,
                 p.total_letras,
-                p.factura_no,
-                p.autorizado,
+                p.observaciones,
                 p.productos_json,
                 p.total_q,
                 p.fecha_creacion,
@@ -648,8 +647,8 @@ app.post('/api/pedidos', isAuthenticated, requirePermission('pedidos.create'), a
         const insertSql = `INSERT INTO pedidos (
             pedidoNo, nombre_cliente, nit_cliente, direccion_cliente, tel_cliente,
             envio_no, transporte, vendedor, codigo_cliente,
-            total_letras, total_q, factura_no, autorizado, productos_json, created_by
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING id`;
+            total_letras, total_q, observaciones, productos_json, created_by
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING id`;
 
         const params = [
             pedidoNo || null,
@@ -663,8 +662,7 @@ app.post('/api/pedidos', isAuthenticated, requirePermission('pedidos.create'), a
             codigo_cliente,
             total_letras,
             total_q,
-            finalData?.facturaNo || null,
-            finalData?.autorizado || null,
+            finalData?.observaciones || null,
             JSON.stringify({ productos, fecha }),
             userId
         ];
@@ -680,11 +678,12 @@ app.post('/api/pedidos', isAuthenticated, requirePermission('pedidos.create'), a
 app.put('/api/pedidos/:id', isAuthenticated, requirePermission('pedidos.edit'), async (req, res) => {
     try {
         const id = parseInt(req.params.id);
-        const { nombre_cliente, nit_cliente, direccion_cliente, total_q } = req.body || {};
+        const { nombre_cliente, nit_cliente, direccion_cliente, codigo_cliente, observaciones } = req.body || {};
         const sql = `UPDATE pedidos SET nombre_cliente = COALESCE($1,nombre_cliente), nit_cliente = COALESCE($2,nit_cliente),
-                     direccion_cliente = COALESCE($3,direccion_cliente), total_q = COALESCE($4,total_q)
-                     WHERE id = $5 RETURNING id`;
-        const r = await dbQuery(sql, [nombre_cliente || null, nit_cliente || null, direccion_cliente || null, total_q || null, id]);
+                     direccion_cliente = COALESCE($3,direccion_cliente), codigo_cliente = COALESCE($4,codigo_cliente),
+                     observaciones = COALESCE($5,observaciones)
+                     WHERE id = $6 RETURNING id`;
+        const r = await dbQuery(sql, [nombre_cliente || null, nit_cliente || null, direccion_cliente || null, codigo_cliente || null, observaciones || null, id]);
         if (r.rows.length === 0) return res.status(404).json({ message: 'Pedido no encontrado' });
         res.json({ id });
     } catch (e) {

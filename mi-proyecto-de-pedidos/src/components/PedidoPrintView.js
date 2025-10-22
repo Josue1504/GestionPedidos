@@ -203,6 +203,16 @@ const PedidoPrintView = ({ pedido }) => {
           </div>
         </div>
       </div>
+
+      {/* Sección de observaciones */}
+      <div className="signature-lines" style={{ marginTop: '20px' }}>
+        <div className="input-line full-width">
+          <label>Observaciones:</label>
+          <div style={{ border: '1px solid #ccc', padding: '8px', minHeight: '60px', backgroundColor: '#f9f9f9', fontSize: '12px', fontFamily: 'Arial, sans-serif', borderRadius: '4px' }}>
+            {pedido.observaciones || 'Sin observaciones'}
+          </div>
+        </div>
+      </div>
       </div>
     </div>
   );

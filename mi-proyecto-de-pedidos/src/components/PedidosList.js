@@ -321,6 +321,19 @@ const PedidosList = ({ onViewForm, hideCreateButton }) => {
                     </div>
                   </div>
                 </div>
+
+                {/* Sección de observaciones editable */}
+                <div className="signature-lines" style={{ marginTop: '20px' }}>
+                  <div className="input-line full-width">
+                    <label>Observaciones:</label>
+                    <textarea 
+                      value={selected.observaciones || ''} 
+                      onChange={e => setSelected(prev => ({ ...prev, observaciones: e.target.value }))}
+                      style={{ width: '100%', minHeight: '60px', padding: '8px', fontSize: '12px', fontFamily: 'Arial, sans-serif', border: '1px solid #ccc', borderRadius: '4px', resize: 'vertical' }}
+                      placeholder="Escriba aquí cualquier observación o comentario sobre el pedido..."
+                    />
+                  </div>
+                </div>
               </div>
 
               <div style={{ display: 'flex', gap: '8px', marginTop: '16px', justifyContent: 'center' }}>
