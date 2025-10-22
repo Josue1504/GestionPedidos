@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './PedidosList.css'; 
+import './PedidoForm.css'; 
 import PedidoPrintView from './PedidoPrintView';
 import apiRequest from '../apiRequest';
 
@@ -179,13 +180,151 @@ const PedidosList = ({ onViewForm, hideCreateButton }) => {
               </div>
             </div>
           ) : (
-            <div>
-              <p><strong>Cliente:</strong> <input value={selected.nombre_cliente || ''} onChange={e => setSelected(prev => ({ ...prev, nombre_cliente: e.target.value }))} /></p>
-              <p><strong>NIT:</strong> <input value={selected.nit_cliente || ''} onChange={e => setSelected(prev => ({ ...prev, nit_cliente: e.target.value }))} /></p>
-              <p><strong>Dirección:</strong> <input value={selected.direccion_cliente || ''} onChange={e => setSelected(prev => ({ ...prev, direccion_cliente: e.target.value }))} /></p>
-              <p><strong>Total Q.:</strong> <input value={selected.total_q || ''} onChange={e => setSelected(prev => ({ ...prev, total_q: e.target.value }))} /></p>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button onClick={handleSave}>Guardar</button>
+            <div className="pedido-container">
+              <div className="printable-pedido">
+                <div className="top-section">
+                  <div className="logo-and-company">
+                    <div className="logo">
+                      <img src={require('./assets/difer.png')} alt="Logo de DIFER" className="logo-img" />
+                    </div>
+                    <div className="company-info">
+                      <h2>Grupo Comercial Difer, Sociedad Anónima</h2>
+                      <p>Colonia el Naranjo, 31 calle 6-21 Int. Bodega 40, zona 4, Mixco Guatemala</p>
+                      <p>grupodifer@gmail.com - ventasgrupodifer@gmail.com</p>
+                      <p className="pbx">PBX: (502) 2429-4100</p>
+                      <p className="business-line">Hierro, Tubería Negra, Galvanizada y Acero al Carbón, Válvulas, Láminas Lisas y Acanaladas, Perfiles, Pinturas y Ferretería en General</p>
+                      <p className="location-date">Guatemala, <span className="underline">{new Date(selected.fecha_creacion).toLocaleDateString()}</span></p>
+                    </div>
+                  </div>
+                  <div className="pedido-box">
+                    <p>PEDIDO NO.</p>
+                    <div className="pedido-number-input">
+                      <p style={{ margin: 0 }}>{selected.pedidoNo || ''}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="client-shipping-section">
+                  <div className="client-group">
+                    <div className="input-line">
+                      <label>Nombre:</label>
+                      <input 
+                        type="text" 
+                        value={selected.nombre_cliente || ''} 
+                        onChange={e => setSelected(prev => ({ ...prev, nombre_cliente: e.target.value }))}
+                        style={{ flexGrow: 1, border: 'none', borderBottom: '1px solid #000', padding: '2px 0', fontSize: '12px' }}
+                      />
+                    </div>
+                    <div className="input-line">
+                      <label>Dirección:</label>
+                      <input 
+                        type="text" 
+                        value={selected.direccion_cliente || ''} 
+                        onChange={e => setSelected(prev => ({ ...prev, direccion_cliente: e.target.value }))}
+                        style={{ flexGrow: 1, border: 'none', borderBottom: '1px solid #000', padding: '2px 0', fontSize: '12px' }}
+                      />
+                    </div>
+                    <div className="input-line">
+                      <label>Envío No:</label>
+                      <div style={{ borderBottom: '1px solid #000', padding: '2px 0', width: '80px', marginRight: '10px' }}>{selected.envio_no || ''}</div>
+                      <label className="inline-label">Transporte</label>
+                      <div style={{ borderBottom: '1px solid #000', padding: '2px 0', width: '120px', marginRight: '10px' }}>{selected.transporte || ''}</div>
+                    </div>
+                  </div>
+                  <div className="shipping-group">
+                    <div className="input-line">
+                      <label>NIT:</label>
+                      <input 
+                        type="text" 
+                        value={selected.nit_cliente || ''} 
+                        onChange={e => setSelected(prev => ({ ...prev, nit_cliente: e.target.value }))}
+                        style={{ flexGrow: 1, border: 'none', borderBottom: '1px solid #000', padding: '2px 0', fontSize: '12px' }}
+                      />
+                    </div>
+                    <div className="input-line">
+                      <label>Tel:</label>
+                      <div style={{ borderBottom: '1px solid #000', padding: '2px 0', flexGrow: 1 }}>{selected.tel_cliente || ''}</div>
+                    </div>
+                    <div className="input-line">
+                      <label className="inline-label">Vendedor</label>
+                      <div style={{ borderBottom: '1px solid #000', padding: '2px 0', width: '120px', marginRight: '10px' }}>{selected.vendedor || ''}</div>
+                      <label className="inline-label">Código de Cliente</label>
+                      <input 
+                        type="text" 
+                        value={selected.codigo_cliente || ''} 
+                        onChange={e => setSelected(prev => ({ ...prev, codigo_cliente: e.target.value }))}
+                        style={{ width: '80px', border: 'none', borderBottom: '1px solid #000', padding: '2px 0', fontSize: '12px' }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mostrar productos solo como vista (no editable) */}
+                <div className="table-section">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th style={{ width: '8%' }}>CANT.</th>
+                        <th style={{ width: '15%' }}>CÓDIGO</th>
+                        <th style={{ width: '45%' }}>DESCRIPCIÓN</th>
+                        <th style={{ width: '16%' }}>PRECIO/U.</th>
+                        <th style={{ width: '16%' }}>VALOR</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(() => {
+                        try {
+                          let productos = [];
+                          if (selected.productos_json) {
+                            const parsed = typeof selected.productos_json === 'string' ? 
+                              JSON.parse(selected.productos_json) : selected.productos_json;
+                            productos = Array.isArray(parsed) ? parsed : 
+                              (parsed.productos ? parsed.productos : []);
+                          }
+                          return productos.length > 0 ? productos.map((p, i) => (
+                            <tr key={i}>
+                              <td style={{ textAlign: 'center' }}>{p.cantidad}</td>
+                              <td style={{ textAlign: 'center' }}>{p.codigo}</td>
+                              <td>{p.descripcion || ''}</td>
+                              <td style={{ textAlign: 'right' }}>{p.precio}</td>
+                              <td style={{ textAlign: 'right' }}>{p.valor}</td>
+                            </tr>
+                          )) : (
+                            <tr>
+                              <td colSpan={5} style={{ textAlign: 'center', color: '#b00', fontWeight: 600 }}>No hay productos en este pedido.</td>
+                            </tr>
+                          );
+                        } catch (e) {
+                          return (
+                            <tr>
+                              <td colSpan={5} style={{ textAlign: 'center', color: '#b00', fontWeight: 600 }}>Error al cargar productos.</td>
+                            </tr>
+                          );
+                        }
+                      })()}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Solo mostrar total en letras como información, sin campo de total Q editable */}
+                <div className="footer-section">
+                  <div className="total-en-letras">
+                    <label>TOTAL EN LETRAS:</label>
+                    <div className="underline-text">
+                      <p style={{ margin: 0 }}>{selected.total_letras || ''}</p>
+                    </div>
+                  </div>
+                  <div className="total-q">
+                    <label>TOTAL Q.</label>
+                    <div className="total-amount">
+                      <div style={{ fontSize: '16px', fontWeight: 'bold', textAlign: 'right' }}>Q. {selected.total_q || ''}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px', marginTop: '16px', justifyContent: 'center' }}>
+                <button onClick={handleSave}>Guardar Cambios</button>
                 <button onClick={() => setIsEditing(false)}>Cancelar</button>
               </div>
             </div>
