@@ -202,6 +202,19 @@ table td input[type="text"] {
   padding: 0;
   margin: 0;
   box-sizing: border-box;
+  white-space: nowrap; /* Evita salto de línea */
+  overflow: hidden; /* Oculta el texto que se desborda */
+  text-overflow: ellipsis; /* Muestra ... cuando el texto es muy largo */
+}
+
+table td input[type="number"] {
+  width: calc(100% - 4px);
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  text-align: center; /* Centra los números */
 }
 
 /* Asegura que las celdas de la tabla tengan el alto adecuado, incluso si los inputs están vacíos */
@@ -363,6 +376,22 @@ table tbody tr {
 table td input[readonly] {
   background-color: #f5f7fa;
   color: #333;
+  cursor: default;
+}
+
+/* Estilos específicos para celdas de código y descripción */
+table td:nth-child(2), /* Columna de código */
+table td:nth-child(3)  /* Columna de descripción */ {
+  max-width: 0; /* Permite que el contenido determine el ancho */
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+table td:nth-child(2) input, /* Input de código */
+table td:nth-child(3) input  /* Input de descripción */ {
+  min-width: 100%;
+  word-wrap: break-word;
+  white-space: normal; /* Permite salto de línea en código y descripción */
 }
 
 .code-status {

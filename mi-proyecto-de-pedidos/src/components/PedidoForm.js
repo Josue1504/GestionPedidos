@@ -452,11 +452,11 @@ const PedidoForm = ({ onViewForm }) => {
                     <table>
                         <thead>
                             <tr>
-                                <th style={{ width: '8%' }}>CANT.</th>
-                                <th style={{ width: '15%' }}>CÓDIGO</th>
-                                <th style={{ width: '45%' }}>DESCRIPCIÓN</th>
-                                <th style={{ width: '16%' }}>PRECIO/U.</th>
-                                <th style={{ width: '16%' }}>VALOR</th>
+                                <th style={{ width: '6%' }}>CANT.</th>
+                                <th style={{ width: '20%' }}>CÓDIGO</th>
+                                <th style={{ width: '50%' }}>DESCRIPCIÓN</th>
+                                <th style={{ width: '12%' }}>PRECIO/U.</th>
+                                <th style={{ width: '12%' }}>VALOR</th>
                             </tr>
                         </thead>
                         <tbody>
