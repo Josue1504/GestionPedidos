@@ -644,6 +644,14 @@ app.post('/api/pedidos', isAuthenticated, requirePermission('pedidos.create'), a
         }
         const total_letras = finalData?.totalLetras || '';
 
+        // Verificar si ya existe un pedido con el mismo número
+        if (pedidoNo) {
+            const existingPedido = await dbQuery('SELECT id FROM pedidos WHERE pedidoNo = $1', [pedidoNo]);
+            if (existingPedido.rows.length > 0) {
+                return res.status(409).json({ message: `Ya existe un pedido con el número ${pedidoNo}` });
+            }
+        }
+
         const insertSql = `INSERT INTO pedidos (
             pedidoNo, nombre_cliente, nit_cliente, direccion_cliente, tel_cliente,
             envio_no, transporte, vendedor, codigo_cliente,
