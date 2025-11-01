@@ -5,6 +5,9 @@ npm-debug.log*
 # Variables de entorno
 .env
 
+# Ignorar variantes locales de entorno
+.env.local
+
 # Logs
 *.log
 

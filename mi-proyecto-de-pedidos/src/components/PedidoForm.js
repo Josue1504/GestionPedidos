@@ -140,6 +140,7 @@ const PedidoForm = ({ onViewForm }) => {
     };
     const [finalData, setFinalData] = useState(initialFinalData);
     const [errors, setErrors] = useState({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
     // Permisos separados: crear y ver
     const [canCreatePedido, setCanCreatePedido] = useState(false);
     const [canViewPedidos, setCanViewPedidos] = useState(false);
@@ -281,6 +282,12 @@ const PedidoForm = ({ onViewForm }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        // Prevenir doble envío
+        if (isSubmitting) {
+            return;
+        }
+        
         // Validar formulario antes de enviar
         const validationErrors = validateForm();
         if (Object.keys(validationErrors).length > 0) {
@@ -292,6 +299,8 @@ const PedidoForm = ({ onViewForm }) => {
         }
 
         setErrors({});
+        setIsSubmitting(true);
+        
         const pedidoCompleto = { pedidoNo, clienteData, productos, finalData, fecha };
         console.log("Enviando datos:", pedidoCompleto);
 
@@ -304,7 +313,8 @@ const PedidoForm = ({ onViewForm }) => {
 
             if (response.ok) {
                 alert('¡Pedido guardado con éxito!');
-                // No limpiar el formulario aquí: el usuario usará 'Nuevo Pedido' cuando quiera iniciar uno nuevo.
+                // Limpiar formulario después del guardado exitoso
+                initializeForm();
             } else {
                 const errorData = await response.json();
                 alert(`Error al guardar el pedido: ${errorData.message}`);
@@ -312,6 +322,8 @@ const PedidoForm = ({ onViewForm }) => {
         } catch (error) {
             console.error('Error de conexión:', error);
             alert('Hubo un problema de conexión con el servidor. Asegúrate de que tu servidor Node.js está activo.');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -534,19 +546,21 @@ const PedidoForm = ({ onViewForm }) => {
                 )}
                 <div className="action-buttons">
                     {canCreatePedido ? (
-                        <button type="submit">Guardar Pedido</button>
+                        <button type="submit" disabled={isSubmitting}>
+                            {isSubmitting ? 'Guardando...' : 'Guardar Pedido'}
+                        </button>
                     ) : (
                         <button type="button" disabled title="No tienes permiso para crear pedidos">Guardar Pedido</button>
                     )}
 
                     {canCreatePedido ? (
-                        <button type="button" onClick={handleNewPedido}>Nuevo Pedido</button>
+                        <button type="button" onClick={handleNewPedido} disabled={isSubmitting}>Nuevo Pedido</button>
                     ) : (
                         <button type="button" disabled title="No tienes permiso para crear pedidos">Nuevo Pedido</button>
                     )}
 
                     {canPrintPedido ? (
-                        <button type="button" onClick={handlePrint}>Imprimir / Guardar PDF</button>
+                        <button type="button" onClick={handlePrint} disabled={isSubmitting}>Imprimir / Guardar PDF</button>
                     ) : (
                         <button type="button" disabled title="No tienes permiso para imprimir pedidos">Imprimir / Guardar PDF</button>
                     )}
