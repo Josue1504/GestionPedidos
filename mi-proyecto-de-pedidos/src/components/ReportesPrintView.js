@@ -2,10 +2,7 @@ import React from 'react';
 import './ReportesPrintView.css';
 
 const ReportesPrintView = ({ pedidos = [], title = '', onClose }) => {
-  const handlePrint = () => {
-    // Fallback: print from modal (may be blocked in some browsers)
-    window.print();
-  };
+  // Note: prefer opening a new tab and printing there to avoid modal-print issues
 
   const openInNewTabAndPrint = () => {
     try {
@@ -76,9 +73,8 @@ const ReportesPrintView = ({ pedidos = [], title = '', onClose }) => {
         <div className="print-header">
           <h2>{title || 'Reporte de Pedidos'}</h2>
           <div className="print-actions">
-            <button onClick={handlePrint}>Imprimir / Guardar PDF</button>
-            <button onClick={openInNewTabAndPrint} style={{ marginLeft: 8 }}>Abrir en nueva pestaña e imprimir</button>
-            <button onClick={onClose}>Cerrar</button>
+            <button onClick={openInNewTabAndPrint}>Imprimir / Guardar PDF</button>
+            <button onClick={onClose} style={{ marginLeft: 8 }}>Cerrar</button>
           </div>
         </div>
 
