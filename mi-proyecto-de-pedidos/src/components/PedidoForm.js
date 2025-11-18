@@ -141,6 +141,7 @@ const PedidoForm = ({ onViewForm }) => {
     const [finalData, setFinalData] = useState(initialFinalData);
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [savedPedidoId, setSavedPedidoId] = useState(null);
     // Permisos separados: crear y ver
     const [canCreatePedido, setCanCreatePedido] = useState(false);
     const [canViewPedidos, setCanViewPedidos] = useState(false);
@@ -312,9 +313,12 @@ const PedidoForm = ({ onViewForm }) => {
             });
 
             if (response.ok) {
+                const data = await response.json().catch(() => ({}));
                 alert('¡Pedido guardado con éxito!');
-                // Limpiar formulario después del guardado exitoso
-                initializeForm();
+                // Mantener el pedido en pantalla para imprimir/guardar PDF.
+                // Guardamos el id retornado para marcar que ya fue persistido.
+                if (data && data.id) setSavedPedidoId(data.id);
+                // No reinicializamos el formulario aquí — el usuario debe usar "Nuevo Pedido" para limpiar.
             } else {
                 const errorData = await response.json();
                 alert(`Error al guardar el pedido: ${errorData.message}`);
@@ -397,6 +401,7 @@ const PedidoForm = ({ onViewForm }) => {
     // Nuevo botón para crear un nuevo pedido
     const handleNewPedido = () => {
         initializeForm();
+        setSavedPedidoId(null);
     };
 
     return (
