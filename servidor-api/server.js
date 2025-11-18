@@ -553,13 +553,12 @@ app.get('/api/pedidos', isAuthenticated, async (req, res) => {
             params.push(Number(created_by));
         }
         if (fromDate) {
-            // Compare by timestamp range to avoid timezone/date casting issues
-            where.push(`fecha_creacion >= $${idx++}`);
-            params.push(fromDate + ' 00:00:00');
+            where.push(`fecha_creacion::date >= $${idx++}`);
+            params.push(fromDate);
         }
         if (toDate) {
-            where.push(`fecha_creacion <= $${idx++}`);
-            params.push(toDate + ' 23:59:59');
+            where.push(`fecha_creacion::date <= $${idx++}`);
+            params.push(toDate);
         }
 
         const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
