@@ -3,7 +3,69 @@ import './ReportesPrintView.css';
 
 const ReportesPrintView = ({ pedidos = [], title = '', onClose }) => {
   const handlePrint = () => {
+    // Fallback: print from modal (may be blocked in some browsers)
     window.print();
+  };
+
+  const openInNewTabAndPrint = () => {
+    try {
+      const w = window.open('', '_blank');
+      if (!w) return alert('No se pudo abrir la nueva pestaña. Revisa el bloqueador de ventanas emergentes.');
+
+      const style = `
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h2 { text-align: left; }
+        .summary { font-weight: 700; margin-bottom: 12px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 6px 8px; font-size: 13px; }
+        th { background: #f6f6f6; }
+      `;
+
+      const rowsHtml = (pedidos || []).map(p => `
+        <tr>
+          <td>${p.id}</td>
+          <td>${p.pedidoNo || ''}</td>
+          <td>${(p.nombre_cliente||'')}</td>
+          <td>Q. ${Number(p.total_q || 0).toFixed(2)}</td>
+          <td>${p.fecha_creacion ? new Date(p.fecha_creacion).toLocaleString('es-ES') : ''}</td>
+        </tr>
+      `).join('\n');
+
+      const html = `
+        <!doctype html>
+        <html>
+          <head>
+            <meta charset="utf-8" />
+            <title>${title || 'Reporte de Pedidos'}</title>
+            <style>${style}</style>
+          </head>
+          <body>
+            <h2>${title || 'Reporte de Pedidos'}</h2>
+            <div class="summary">Total pedidos: ${(pedidos||[]).length} — Suma Q. ${(pedidos||[]).reduce((s,p)=>s+(parseFloat(p.total_q)||0),0).toFixed(2)}</div>
+            <table>
+              <thead>
+                <tr><th>ID</th><th>Pedido No</th><th>Cliente</th><th>Total Q.</th><th>Fecha</th></tr>
+              </thead>
+              <tbody>
+                ${rowsHtml}
+              </tbody>
+            </table>
+          </body>
+        </html>
+      `;
+
+      w.document.open();
+      w.document.write(html);
+      w.document.close();
+      // Wait for content to render then trigger print
+      w.focus();
+      setTimeout(() => {
+        try { w.print(); } catch (e) { console.error('Error printing new tab', e); }
+      }, 500);
+    } catch (e) {
+      console.error('openInNewTabAndPrint error', e);
+      alert('Error al abrir la nueva pestaña para imprimir');
+    }
   };
 
   const total = pedidos.reduce((s, p) => s + (parseFloat(p.total_q) || 0), 0).toFixed(2);
@@ -15,6 +77,7 @@ const ReportesPrintView = ({ pedidos = [], title = '', onClose }) => {
           <h2>{title || 'Reporte de Pedidos'}</h2>
           <div className="print-actions">
             <button onClick={handlePrint}>Imprimir / Guardar PDF</button>
+            <button onClick={openInNewTabAndPrint} style={{ marginLeft: 8 }}>Abrir en nueva pestaña e imprimir</button>
             <button onClick={onClose}>Cerrar</button>
           </div>
         </div>
