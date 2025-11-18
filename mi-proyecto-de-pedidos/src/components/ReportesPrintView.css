@@ -1,0 +1,32 @@
+.reportes-print-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.reportes-print-container {
+  background: #fff;
+  width: 90%;
+  max-width: 1100px;
+  max-height: 90%;
+  overflow: auto;
+  padding: 20px;
+  border-radius: 6px;
+}
+.print-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.print-actions button { margin-left:8px; }
+.print-body { font-family: Arial, sans-serif; }
+.print-summary { margin-bottom:8px; font-weight:600; }
+.print-table { width:100%; border-collapse: collapse; }
+.print-table th, .print-table td { border: 1px solid #ddd; padding: 6px 8px; font-size: 13px; }
+.print-table th { background: #f6f6f6; }
+
+/* Simple print styles */
+@media print {
+  body * { visibility: hidden; }
+  .reportes-print-container, .reportes-print-container * { visibility: visible; }
+  .reportes-print-container { position: absolute; left: 0; top: 0; width: 100%; }
+}

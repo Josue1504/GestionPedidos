@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './ReportesPedidos.css';
+import ReportesPrintView from './ReportesPrintView';
 import apiRequest from '../apiRequest';
 
 const ReportesPedidos = ({ onClose }) => {
@@ -11,6 +12,9 @@ const ReportesPedidos = ({ onClose }) => {
   const [pageSize, setPageSize] = useState(50);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [showPrintView, setShowPrintView] = useState(false);
+  const [printPedidos, setPrintPedidos] = useState([]);
+  const [printTitle, setPrintTitle] = useState('');
 
   useEffect(() => {
     apiRequest('/api/users')
@@ -37,14 +41,47 @@ const ReportesPedidos = ({ onClose }) => {
   const url = `/api/pedidos?${params.toString()}`;
   const res = await apiRequest(url);
       const j = await res.json();
-      setPedidos(j.pedidos || []);
+      const list = j.pedidos || [];
+      setPedidos(list);
       setTotal(j.total || 0);
+      return list;
     } catch (err) {
       console.error('Error cargando pedidos para reporte', err);
       setPedidos([]); setTotal(0);
     } finally {
       setLoading(false);
     }
+  };
+
+  const openPrintView = async (scope = 'selected') => {
+    // scope: 'selected' -> current filters, 'all' -> all pedidos
+    setLoading(true);
+    try {
+      let list = [];
+      if (scope === 'selected') {
+        // use current pedidos (if loaded) otherwise load with filters
+        if (pedidos && pedidos.length) list = pedidos;
+        else list = await loadPedidos(selectedUser, 1, selectedDate) || [];
+        const user = users.find(u => String(u.id) === String(selectedUser));
+        setPrintTitle(user ? `Pedidos de ${user.username}` : 'Pedidos (filtro)');
+      } else {
+        list = await loadPedidos('', 1, selectedDate) || [];
+        setPrintTitle('Todos los pedidos');
+      }
+      setPrintPedidos(list);
+      setShowPrintView(true);
+    } catch (e) {
+      console.error('Error preparando vista de impresión', e);
+      alert('Error al preparar la vista de impresión');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const closePrintView = () => {
+    setShowPrintView(false);
+    setPrintPedidos([]);
+    setPrintTitle('');
   };
 
   const handleUserChange = (e) => {
@@ -88,6 +125,10 @@ const ReportesPedidos = ({ onClose }) => {
         {loading ? (<div>Cargando...</div>) : (
           <>
             <div>Mostrando {pedidos.length} de {total} pedidos</div>
+            <div style={{ marginTop: 8 }}>
+              <button onClick={() => openPrintView('selected')} disabled={pedidos.length === 0}>Imprimir datos filtrados</button>
+              <button onClick={() => openPrintView('all')} style={{ marginLeft: 8 }}>Imprimir todos los datos</button>
+            </div>
             <div style={{ marginTop: 6, fontWeight: 'bold' }}>Suma total Q.: Q. {pedidos.reduce((s, p) => s + (parseFloat(p.total_q) || 0), 0).toFixed(2)}</div>
             <table className="report-table">
               <thead>
