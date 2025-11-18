@@ -19,7 +19,7 @@ const ReportesPedidos = ({ onClose }) => {
       .catch(() => setUsers([]));
   }, []);
 
-  const loadPedidos = async (uId, p = 1) => {
+  const loadPedidos = async (uId, p = 1, dateParam = undefined) => {
     setLoading(true);
     try {
       // if uId is falsy, load all pedidos (admin view)
@@ -28,9 +28,11 @@ const ReportesPedidos = ({ onClose }) => {
       if (uId) params.append('created_by', uId);
       params.append('page', p);
       params.append('pageSize', pageSize);
-      if (selectedDate) {
-        params.append('fromDate', selectedDate);
-        params.append('toDate', selectedDate);
+      // dateParam takes precedence (passed directly from the change handler)
+      const dateToUse = dateParam !== undefined ? dateParam : selectedDate;
+      if (dateToUse) {
+        params.append('fromDate', dateToUse);
+        params.append('toDate', dateToUse);
       }
   const url = `/api/pedidos?${params.toString()}`;
   const res = await apiRequest(url);
@@ -57,12 +59,14 @@ const ReportesPedidos = ({ onClose }) => {
     const d = e.target.value; // YYYY-MM-DD
     setSelectedDate(d);
     setPage(1);
-    loadPedidos(selectedUser, 1);
+    // Pasar la fecha nueva directamente para evitar condiciones de carrera
+    loadPedidos(selectedUser, 1, d);
   };
 
   const handlePage = (newPage) => {
     setPage(newPage);
-    if (selectedUser) loadPedidos(selectedUser, newPage);
+    // siempre recargar con los filtros actuales (fecha tomado desde el estado)
+    loadPedidos(selectedUser, newPage);
   };
 
   return (
