@@ -158,6 +158,10 @@ const ReportesPedidos = ({ onClose }) => {
         )}
       </div>
 
+      {showPrintView && (
+        <ReportesPrintView pedidos={printPedidos} title={printTitle} onClose={closePrintView} />
+      )}
+
       <div style={{ marginTop: 12 }}>
         <button onClick={onClose}>Cerrar</button>
       </div>

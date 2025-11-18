@@ -154,6 +154,15 @@ const AdminUsers = ({ onClose }) => {
   };
 
   const togglePermission = (id) => {
+    // If role is "vendedor", prevent toggling admin-only permissions
+    const adminNames = ['pedidos.view_all', 'users.manage'];
+    const adminPermIds = permissions.filter(p => adminNames.includes(p.name)).map(p => p.id);
+    const selectedRole = rolesList.find(r => String(r.id) === String(roleId));
+    const roleName = selectedRole ? (selectedRole.name || '').toString().toLowerCase() : '';
+    if (roleName === 'vendedor' && adminPermIds.includes(id)) {
+      // prevent toggling admin permission for vendedor
+      return;
+    }
     const s = new Set(checked);
     if (s.has(id)) s.delete(id); else s.add(id);
     setChecked(s);
@@ -239,7 +248,7 @@ const AdminUsers = ({ onClose }) => {
         </div>
 
         <div className="create-user">
-          <h4>Crear vendedor</h4>
+          <h4>Crear usuario</h4>
           <div className="form-row">
             <label>Username</label>
             <input value={username} onChange={e => setUsername(e.target.value)} placeholder="usuario" />
@@ -282,18 +291,23 @@ const AdminUsers = ({ onClose }) => {
               })}
             </div>
 
-            {/* Admin-only permissions below */}
+            {/* Admin-only permissions below - disable/hidden when role is vendedor */}
             <div className="permissions-admin-row">
               {canGrantViewAll && (() => {
                 const p = permissions.find(pp => pp.name === 'pedidos.view_all');
                 if (!p) return null;
+                const selectedRole = rolesList.find(r => String(r.id) === String(roleId));
+                const roleName = selectedRole ? (selectedRole.name || '').toString().toLowerCase() : '';
+                const isVendedor = roleName === 'vendedor';
                 return (
                   <button
                     key={p.id}
                     type="button"
-                    className={`perm-pill admin-pill ${checked.has(p.id) ? 'checked' : ''}`}
-                    onClick={() => togglePermission(p.id)}
+                    className={`perm-pill admin-pill ${checked.has(p.id) ? 'checked' : ''} ${isVendedor ? 'disabled-perm' : ''}`}
+                    onClick={() => { if (!isVendedor) togglePermission(p.id); }}
                     aria-pressed={checked.has(p.id)}
+                    disabled={isVendedor}
+                    title={isVendedor ? 'No disponible para el rol vendedor' : ''}
                   >
                     {permLabel(p.name)}
                     <span className="admin-badge">ADMIN</span>
@@ -304,13 +318,18 @@ const AdminUsers = ({ onClose }) => {
               {canGrantUsersManage && (() => {
                 const p = permissions.find(pp => pp.name === 'users.manage');
                 if (!p) return null;
+                const selectedRole = rolesList.find(r => String(r.id) === String(roleId));
+                const roleName = selectedRole ? (selectedRole.name || '').toString().toLowerCase() : '';
+                const isVendedor = roleName === 'vendedor';
                 return (
                   <button
                     key={p.id}
                     type="button"
-                    className={`perm-pill admin-pill ${checked.has(p.id) ? 'checked' : ''}`}
-                    onClick={() => togglePermission(p.id)}
+                    className={`perm-pill admin-pill ${checked.has(p.id) ? 'checked' : ''} ${isVendedor ? 'disabled-perm' : ''}`}
+                    onClick={() => { if (!isVendedor) togglePermission(p.id); }}
                     aria-pressed={checked.has(p.id)}
+                    disabled={isVendedor}
+                    title={isVendedor ? 'No disponible para el rol vendedor' : ''}
                   >
                     {permLabel(p.name)}
                     <span className="admin-badge">ADMIN</span>
