@@ -212,8 +212,16 @@ const PedidoForm = ({ onViewForm }) => {
 
     const handleInputChange = (e, section) => {
         const { name, value } = e.target;
+        // Campos numéricos que deben aceptar solo dígitos
+        const numericFields = new Set(['nit', 'tel', 'vendedor', 'codigoCliente']);
+
         if (section === 'cliente') {
-            setClienteData(prevData => ({ ...prevData, [name]: value }));
+            let newValue = value;
+            if (numericFields.has(name)) {
+                // Elimina todo carácter que no sea dígito
+                newValue = String(value).replace(/\D/g, '');
+            }
+            setClienteData(prevData => ({ ...prevData, [name]: newValue }));
             setErrors(prev => ({ ...prev, cliente: undefined }));
         } else if (section === 'final') {
             setFinalData(prevData => ({ ...prevData, [name]: value }));
@@ -450,17 +458,17 @@ const PedidoForm = ({ onViewForm }) => {
                     <div className="shipping-group">
                         <div className="input-line">
                             <label>NIT:</label>
-                            <input type="text" name="nit" value={clienteData.nit} onChange={(e) => handleInputChange(e, 'cliente')} />
+                            <input inputMode="numeric" pattern="\\d*" type="text" name="nit" value={clienteData.nit} onChange={(e) => handleInputChange(e, 'cliente')} />
                         </div>
                         <div className="input-line">
                             <label>Tel:</label>
-                            <input type="text" name="tel" value={clienteData.tel} onChange={(e) => handleInputChange(e, 'cliente')} />
+                            <input inputMode="numeric" pattern="\\d*" type="text" name="tel" value={clienteData.tel} onChange={(e) => handleInputChange(e, 'cliente')} />
                         </div>
                         <div className="input-line">
                             <label className="inline-label">Vendedor</label>
-                            <input type="text" name="vendedor" className="medium-input" value={clienteData.vendedor} onChange={(e) => handleInputChange(e, 'cliente')} />
+                            <input inputMode="numeric" pattern="\\d*" type="text" name="vendedor" className="medium-input" value={clienteData.vendedor} onChange={(e) => handleInputChange(e, 'cliente')} />
                             <label className="inline-label">Código de Cliente</label>
-                            <input type="text" name="codigoCliente" className="small-input" value={clienteData.codigoCliente} onChange={(e) => handleInputChange(e, 'cliente')} />
+                            <input inputMode="numeric" pattern="\\d*" type="text" name="codigoCliente" className="small-input" value={clienteData.codigoCliente} onChange={(e) => handleInputChange(e, 'cliente')} />
                         </div>
                     </div>
                 </div>
