@@ -397,21 +397,15 @@ const PedidoForm = ({ onViewForm }) => {
             }
         }
 
-        // NIT: si fue proporcionado, validar 7 dígitos (colocar aquí la longitud requerida)
+        // NIT: si fue proporcionado, validar al menos 9 dígitos (ajustado según requerimiento)
         if (clienteData.nit && clienteData.nit.trim() !== '') {
-            if (!/^\d{7}$/.test(clienteData.nit)) {
+            if (!/^\d{9,}$/.test(clienteData.nit)) {
                 ensureClienteArray();
-                v.cliente.push('NIT debe contener exactamente 7 dígitos.');
+                v.cliente.push('NIT debe contener al menos 9 dígitos.');
             }
         }
 
-        // Código de Cliente: si fue proporcionado, debe tener al menos 3 dígitos
-        if (clienteData.codigoCliente && clienteData.codigoCliente.trim() !== '') {
-            if (!/^\d{3,}$/.test(clienteData.codigoCliente)) {
-                ensureClienteArray();
-                v.cliente.push('Código de Cliente debe tener al menos 3 dígitos.');
-            }
-        }
+        // Código de Cliente: validación removida (puede tener 1..n dígitos)
 
         return v;
     };
