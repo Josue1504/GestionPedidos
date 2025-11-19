@@ -385,6 +385,34 @@ const PedidoForm = ({ onViewForm }) => {
             v.productos = productErrors;
         }
 
+        // Validaciones adicionales para campos numéricos del cliente
+        // Aseguramos que v.cliente sea un array si vamos a añadir mensajes
+        const ensureClienteArray = () => { if (!v.cliente) v.cliente = []; };
+
+        // Teléfono: si fue proporcionado, debe tener exactamente 8 dígitos
+        if (clienteData.tel && clienteData.tel.trim() !== '') {
+            if (!/^\d{8}$/.test(clienteData.tel)) {
+                ensureClienteArray();
+                v.cliente.push('Tel debe contener exactamente 8 dígitos.');
+            }
+        }
+
+        // NIT: si fue proporcionado, validar 7 dígitos (colocar aquí la longitud requerida)
+        if (clienteData.nit && clienteData.nit.trim() !== '') {
+            if (!/^\d{7}$/.test(clienteData.nit)) {
+                ensureClienteArray();
+                v.cliente.push('NIT debe contener exactamente 7 dígitos.');
+            }
+        }
+
+        // Código de Cliente: si fue proporcionado, debe tener al menos 3 dígitos
+        if (clienteData.codigoCliente && clienteData.codigoCliente.trim() !== '') {
+            if (!/^\d{3,}$/.test(clienteData.codigoCliente)) {
+                ensureClienteArray();
+                v.cliente.push('Código de Cliente debe tener al menos 3 dígitos.');
+            }
+        }
+
         return v;
     };
 
@@ -458,17 +486,17 @@ const PedidoForm = ({ onViewForm }) => {
                     <div className="shipping-group">
                         <div className="input-line">
                             <label>NIT:</label>
-                            <input inputMode="numeric" pattern="\\d*" type="text" name="nit" value={clienteData.nit} onChange={(e) => handleInputChange(e, 'cliente')} />
+                            <input inputMode="numeric" type="text" name="nit" value={clienteData.nit} onChange={(e) => handleInputChange(e, 'cliente')} />
                         </div>
                         <div className="input-line">
                             <label>Tel:</label>
-                            <input inputMode="numeric" pattern="\\d*" type="text" name="tel" value={clienteData.tel} onChange={(e) => handleInputChange(e, 'cliente')} />
+                            <input inputMode="numeric" type="text" name="tel" value={clienteData.tel} onChange={(e) => handleInputChange(e, 'cliente')} />
                         </div>
                         <div className="input-line">
                             <label className="inline-label">Vendedor</label>
-                            <input inputMode="numeric" pattern="\\d*" type="text" name="vendedor" className="medium-input" value={clienteData.vendedor} onChange={(e) => handleInputChange(e, 'cliente')} />
+                            <input inputMode="numeric" type="text" name="vendedor" className="medium-input" value={clienteData.vendedor} onChange={(e) => handleInputChange(e, 'cliente')} />
                             <label className="inline-label">Código de Cliente</label>
-                            <input inputMode="numeric" pattern="\\d*" type="text" name="codigoCliente" className="small-input" value={clienteData.codigoCliente} onChange={(e) => handleInputChange(e, 'cliente')} />
+                            <input inputMode="numeric" type="text" name="codigoCliente" className="small-input" value={clienteData.codigoCliente} onChange={(e) => handleInputChange(e, 'cliente')} />
                         </div>
                     </div>
                 </div>
