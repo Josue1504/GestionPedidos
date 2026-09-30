@@ -4,8 +4,11 @@ const config = {
     API_BASE_URL: '', // Usar proxy local
   },
   production: {
-    // Preferir variable de entorno; fallback al dominio real del backend en Render
-    API_BASE_URL: process.env.REACT_APP_API_URL || 'https://gestionpedidos-1.onrender.com',
+    // URL de Railway (activa)
+    API_BASE_URL: process.env.REACT_APP_API_URL || 'https://gestionpedidos.railway.internal',
+    
+    // URL de Render (comentada - descomenta si necesitas)
+    // API_BASE_URL: 'https://gestionpedidos-1.onrender.com',
   }
 };
 
@@ -17,3 +20,4 @@ console.log('API_BASE_URL:', config[environment].API_BASE_URL);
 console.log('REACT_APP_API_URL:', process.env.REACT_APP_API_URL);
 
 export default config[environment];
+
