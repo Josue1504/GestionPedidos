@@ -5,7 +5,7 @@ const config = {
   },
   production: {
     // URL de Railway (activa)
-    API_BASE_URL: process.env.REACT_APP_API_URL || 'gestionpedidos-production-0d76.up.railway.app',
+    API_BASE_URL: process.env.REACT_APP_API_URL || 'https://gestionpedidos-production-0d76.up.railway.app',
     
     // URL de Render (comentada - descomenta si necesitas)
     // API_BASE_URL: 'https://gestionpedidos-1.onrender.com',
