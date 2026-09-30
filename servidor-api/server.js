@@ -14,7 +14,8 @@ const app = express();
 const allowedOrigins = [
     process.env.FRONTEND_URL,
     'https://gestionpedidos-1-fe.onrender.com',
-    'http://localhost:3000'
+    'http://localhost:3000',
+    'gestionpedidos-frontend-production.up.railway.app'
 ].filter(Boolean);
 
 const corsOptions = {
